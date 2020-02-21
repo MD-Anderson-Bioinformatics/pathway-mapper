@@ -34,6 +34,8 @@ import "../css/pmv1.css";
 import "../css/pmv2.css";
 import '../css/qtip.css';
 
+import NGCHM from '../utils/NGCHM';
+
 const maxHeapFn = require('@datastructures-js/max-heap');
 let maxHeap = maxHeapFn();
 
@@ -51,6 +53,7 @@ interface IPathwayMapperProps{
   tableComponent?: (data: IPathwayMapperTable[], selectedPathway: string, onPathwaySelect: (pathway: string) => void) => JSX.Element;
   validGenes?: any;
   toast: any;
+  isInIframe: boolean;
 }
 
 export interface ICBioData{
@@ -139,10 +142,14 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
   viewOperationsManager: ViewOperationsManager;
   gridOptionsManager: GridOptionsManager;
 
-
+  ngchm: any;
 
   constructor(props: IPathwayMapperProps){
     super(props);
+    if (this.props.isInIframe) {
+      var ngchm = new NGCHM(this.editor, this.profiles)
+      this.ngchm = ngchm;
+    }
     this.fileManager = new FileOperationsManager();
     this.pathwayActions = new PathwayActions(this.pathwayHandler, this.profiles, this.fileManager, 
                                              this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative);

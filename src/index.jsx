@@ -24,8 +24,30 @@ window.onload = () => {
 
   const id = findGetParameter("id");
 
+  /*
+     Function to test if page was loaded in an iframe.
+     Returns Boolean:
+         true: if window is in an iFrame
+         false: otherwise
+  */
+  function inIframe() {
+    try {
+      return window.self !== window.top;
+    } catch(e) { // catch IE bug
+      return true;
+    }
+  }
+
+  const isInIframe = inIframe()
+
   if(!id){
-    render(<WelcomePage postWelcome={postWelcome}/>, rootEl);
+    if (isInIframe) { // skip welcome page and open in local mode 
+      postWelcome(false);
+     } else {         // display welcome page
+      postWelcome(false);
+      render(<WelcomePage postWelcome={postWelcome}/>, rootEl);
+    }
+
   } else {
     postWelcome(true);
   }
@@ -33,7 +55,7 @@ window.onload = () => {
   function postWelcome(isCollaborative){
     const cBioAlteration = [/*{gene: "MDM2", altered: 5, sequenced: 6}*/];
     if(!pathwayName){
-      render(<PathwayMapper isCBioPortal={false} isCollaborative={isCollaborative}/>, rootEl);
+      render(<PathwayMapper isCBioPortal={false} isCollaborative={isCollaborative} isInIframe={isInIframe} />, rootEl);
     } else {
       render(<PathwayMapper isCBioPortal={false} isCollaborative={isCollaborative} genes={genes} pathwayName={pathwayName} alterationData={alterationData}/>, rootEl);
     }
