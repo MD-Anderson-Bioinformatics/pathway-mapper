@@ -347,8 +347,8 @@ export default class GenomicDataOverlayManager {
         )
 
         // Text Part
+        var text
         if (percent.hasOwnProperty('colorValue')) { // then use raw value (w/o '%' sign)
-           var text
            if (parseFloat(percent.value) == NaN) {
              text = percent.value;
            } else {
@@ -357,7 +357,7 @@ export default class GenomicDataOverlayManager {
         } else {
            const textPercent =
              percent < 0.5 && percent > 0 ? '<0.5' : Number(percent).toFixed(1)
-           const text = textPercent + '%'
+           text = textPercent + '%'
         }
         const fontSize = 14
         const textLength = text.length

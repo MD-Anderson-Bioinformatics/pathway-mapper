@@ -142,9 +142,6 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
   viewOperationsManager: ViewOperationsManager;
   gridOptionsManager: GridOptionsManager;
 
-  @observable
-  ngchm: any;
-
   constructor(props: IPathwayMapperProps){
     super(props);
     if (this.props.isInIframe) {
@@ -153,7 +150,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     }
     this.fileManager = new FileOperationsManager();
     this.pathwayActions = new PathwayActions(this.pathwayHandler, this.profiles, this.fileManager, 
-                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative);
+                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative, this.props.isInIframe);
     this.selectedPathway = "";
     if(this.props.pathwayName){
       this.pathwayActions.changePathway(this.props.pathwayName);
@@ -576,11 +573,6 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
       this.portalAcessor = new CBioPortalAccessor();
       this.loadRedirectedPortalData();
     }
-    if (this.props.isInIframe && typeof this.ngchm === 'undefined') { // if in iframe, initialize NGCHM
-      var ngchm = new NGCHM(this.editor, this.profiles)
-      this.ngchm = ngchm;
-    }
-
   }
 
   @autobind

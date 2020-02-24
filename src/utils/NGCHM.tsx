@@ -1,6 +1,7 @@
 // NGCHM class
 //
 // For interaction with NG-CHM
+import autobind from 'autobind-decorator'
 import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData} from '../ui/react-pathway-mapper'
 
@@ -285,9 +286,15 @@ export default class NGCHM {
 			selection: highLightInfo
 		})
 	} // end function highlightSelected
-	constructor(editor: EditorActionsManager, profiles: IProfileMetaData[]) {
+
+
+	/* Define editor for ngchm object*/
+	@autobind
+	editorHandler(editor) {
+		this.editor = editor;
+	}
+	constructor(profiles: IProfileMetaData[]) {
 		this.profiles = profiles
-		this.editor = editor
 		const knownDatasets = [];
 		var labels = null;
 		var plotConfig = {};
@@ -342,10 +349,10 @@ export default class NGCHM {
 			When user clicks labels on the NGCHM, those nodes (if present) will
 			be highlighted on the pathway
 		*/
-		VAN.addMessageListener('makeHiLite', function(msg) {
-			editor.removeAllHighlight() // clear existing highlights first
-			var genesFromNGCHM = msg.data.pointIds.map(l => l.toUpperCase());
-			var allNodes = editor.cy.elements()
+		VAN.addMessageListener('makeHiLite', (msg) => {
+			this.editor.removeAllHighlight() // clear existing highlights first
+			var genesFromNGCHM = msg.data.pointIds.map(l => l.toUpperCase()).map(l => l.split('|')[0]);
+			var allNodes = this.editor.cy.elements()
 			allNodes.forEach(function(ele:any) {
 				if (genesFromNGCHM.includes(ele.data().name.toUpperCase())) {
 					ele.addClass('highlightedNode')
@@ -354,7 +361,7 @@ export default class NGCHM {
 		})
 
 		// Update the editor when we get the test results.
-		VAN.addMessageListener ('testData', function (msg) {
+		VAN.addMessageListener ('testData', (msg) => {
 			// structure of objToSend:
 			//    { name1: [ {gene: geneName1, value: value1, color: hexcolor1 },
 			//               {gene: geneName2, value: value2, color: hexcolor2 } ...
@@ -377,7 +384,7 @@ export default class NGCHM {
 					return { gene: gn, value: r.values[idx], color: colors[idx] };
 				});
 			});
-			editor.addGenomicData(objToSend);
+			this.editor.addGenomicData(objToSend);
 		});
 
 		function addDataset (datasetLabel) {

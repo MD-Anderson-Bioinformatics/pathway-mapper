@@ -16,6 +16,7 @@ import GridOptionsManager from '../managers/GridOptionsManager'
 import { ILayoutProperties } from '../modals/LayoutProperties'
 import { EGridType } from '../modals/GridSettings'
 import ConfirmationModal from '../modals/ConfirmationModal'
+import NGCHM from './NGCHM';
 
 export default class PathwayActions {
   @observable
@@ -35,6 +36,8 @@ export default class PathwayActions {
   isCollaborative: boolean
   viewOperationsManager: ViewOperationsManager
   overlayUploader: any
+  isInIframe: boolean
+  ngchm: any
 
   @observable
   enabledType: EGridType
@@ -45,7 +48,8 @@ export default class PathwayActions {
     fileManager: FileOperationsManager,
     handleOpen: (modalId: EModalType) => void,
     isCBioPortal: boolean,
-    isCollaborative: boolean
+    isCollaborative: boolean,
+    isInIframe: boolean,
   ) {
     this.pathwayHandler = pathwayHandler
     this.profiles = profiles
@@ -54,6 +58,10 @@ export default class PathwayActions {
     this.isCBioPortal = isCBioPortal
     this.isCollaborative = isCollaborative
     this.enabledType = EGridType.NONE
+    this.isInIframe = isInIframe
+    if (this.isInIframe) {
+      this.ngchm = new NGCHM(this.profiles)
+    }
   }
 
   emphasiseQueryGenes(queryGenes: string[]) {
@@ -255,6 +263,12 @@ export default class PathwayActions {
   @autobind
   highlightSelected() {
     this.editor.highlightSelected()
+    if (this.isInIframe) {
+      if (typeof this.ngchm === 'undefined') {
+        this.ngchm = new NGCHM(this.profiles)
+      }
+      this.ngchm.highlightSelected()
+    }
   }
 
   @autobind
@@ -343,6 +357,12 @@ export default class PathwayActions {
   @autobind
   removeAllHighlight() {
     this.editor.removeAllHighlight()
+    if (this.isInIframe) {
+      if (typeof this.ngchm === 'undefined') {
+        this.ngchm = new NGCHM(this.profiles)
+      }
+      this.ngchm.highlightSelected()
+    }
   }
 
   @autobind
@@ -417,6 +437,9 @@ export default class PathwayActions {
     this.undoRedoManager = undoRedoManager
     this.viewOperationsManager = viewOperationsManager
     this.gridOptionsManager = gridOptionsManager
+    if (this.ngchm != 'undefined') {  // define editor for ngchm
+     this.ngchm.editorHandler(editor) 
+    }
   }
 
   @autobind
