@@ -26,6 +26,29 @@ export default class GenomicDataOverlayManager {
     return oldCount
   }
 
+  /*
+     Function to return genomic data group id of group containing all keys.
+ 
+     This is for use when the user wants to overwrite the data in a previously
+     existing genomic data group. (e.g. if the user is pulling data from an NGCHM)
+  */
+  findMatchingGroup (keys) {
+    for (let i = 0; i < this.groupedGenomicDataCount; i++) {
+      var matches = true;
+      const k2 = this.groupedGenomicDataMap[i];
+      for (let j = 0; j < keys.length; j++) {
+        if (k2.indexOf(keys[j]) === -1) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches) {
+        return i;
+      }
+    }
+    return null;
+  }
+
   addGenomicDataLocally(genomicData, groupID) {
     this.parseGenomicData(genomicData, groupID)
     this.showGenomicData()

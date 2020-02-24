@@ -1694,7 +1694,8 @@ export default class EditorActionsManager{
 
     addGenomicData(genomicData: any)
     {
-        const groupID = this.getEmptyGroupID();
+        var groupID = this.genomicDataOverlayManager.findMatchingGroup (Object.keys(genomicData)); //<-- if group already exists, use its ID
+        if (groupID === null) groupID = this.getEmptyGroupID();  // <-- otherwise start a new group
         
         console.log("genomicData");
         console.log(genomicData);
