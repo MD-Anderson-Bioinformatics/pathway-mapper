@@ -388,8 +388,8 @@ export default class NGCHM {
 		}
 
 		/* Function to return the gene symbols that are on the pathway */
-		function getLabels () {
-			return editor.getGeneSymbols();
+		var getLabels = () => {
+			return this.editor.getGeneSymbols();
 		}
 
 		function setLabels (l) {

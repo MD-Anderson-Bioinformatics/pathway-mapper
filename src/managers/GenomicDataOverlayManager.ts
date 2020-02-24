@@ -265,37 +265,75 @@ export default class GenomicDataOverlayManager {
         genomicBoxCounter++
       }
     }
+    /* Function to determine if text should be black or white
+         Inputs: 
+           backgroundColor: hex color value of background
+         Outputs:
+            textColor: recommented text color (hex)
+    */
+    function suggestTextColor(backgroundColor) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(backgroundColor)
+      var red = parseInt(result[1], 16)
+      var blue = parseInt(result[2], 16)
+      var green = parseInt(result[3], 16)
+      if (red * 0.299 + green * 0.587 + blue * 0.114 > 186) {
+        return '#000000' // black text (background color is light)
+      } else {
+        return '#ffffff' // white text (background color is dark)
+      }
+    }
 
+    /*
+       Function to generate svg for node
+         Inputs:
+            x
+            y
+            w
+            h
+            percent: can be number or object. 
+                     If an object, structure is:
+                        { value: <value>,
+                          colorValue: <hex color value>
+                        }.
+                     If an object, the color of the SVG will be determined by the colorValue, 
+                     and the color of the text will be determined by suggestTextColor()
+            parentSVG
+          Outputs:
+            svg
+    */
     function genomicDataRectangleGenerator(x, y, w, h, percent, parentSVG) {
       let colorString = ''
       if (percent) {
-        const isNegativePercent = percent < 0
-        let _percent = Math.abs(percent)
-        // Handle special cases here !
-
-        _percent = _percent > 0 && _percent < 0.5 ? 0.5 : _percent
-        // _percent = _percent === 1 ? 2 : _percent
-        // Here we are using non linear regression
-        // Fitting points of (0,0), (25,140), (50,220), (100, 255)
-        const percentColor = 255 - (-7.118 + 53.9765 * Math.log(_percent + 0.8))
-
-        if (_percent === 0 || percent == -101) {
-          colorString = 'rgb(255,255,255)'
-        } else if (isNegativePercent) {
-          colorString =
-            'rgb(' +
-            Math.round(percentColor) +
-            ',' +
-            Math.round(percentColor) +
-            ',255)'
-          percent = percent.substring(1)
+        if (percent.hasOwnProperty('colorValue')) { // then use the color value passed in percent object
+          colorString = percent.colorValue
         } else {
-          colorString =
-            'rgb(255,' +
-            Math.round(percentColor) +
-            ',' +
-            Math.round(percentColor) +
-            ')'
+          const isNegativePercent = percent < 0
+          let _percent = Math.abs(percent)
+          // Handle special cases here !
+          _percent = _percent < 0.5 ? 2 : _percent
+          _percent = _percent === 1 ? 2 : _percent
+          // Here we are using non linear regression
+          // Fitting points of (0,0), (25,140), (50,220), (100, 255)
+          const percentColor = 255 - (-7.118 + 53.9765 * Math.log(_percent))
+  
+          if (percent === 0) {
+            colorString = 'rgb(255,255,255)'
+          } else if (isNegativePercent) {
+            colorString =
+              'rgb(' +
+              Math.round(percentColor) +
+              ',' +
+              Math.round(percentColor) +
+              ',255)'
+            percent = percent.substring(1)
+          } else {
+            colorString =
+              'rgb(255,' +
+              Math.round(percentColor) +
+              ',' +
+              Math.round(percentColor) +
+              ')'
+          }
         }
         // Rectangle Part
         const overlayRect = document.createElementNS(svgNameSpace, 'rect')
@@ -309,9 +347,18 @@ export default class GenomicDataOverlayManager {
         )
 
         // Text Part
-        const textPercent =
-          percent < 0.5 && percent > 0 ? '<0.5' : Number(percent).toFixed(1)
-        const text = percent == -101 ? 'N/P' : textPercent + '%'
+        if (percent.hasOwnProperty('colorValue')) { // then use raw value (w/o '%' sign)
+           var text
+           if (parseFloat(percent.value) == NaN) {
+             text = percent.value;
+           } else {
+             text = parseFloat(percent.value).toFixed(2)
+           }
+        } else {
+           const textPercent =
+             percent < 0.5 && percent > 0 ? '<0.5' : Number(percent).toFixed(1)
+           const text = textPercent + '%'
+        }
         const fontSize = 14
         const textLength = text.length
         const xOffset = w / 2 - textLength * 4
@@ -321,6 +368,9 @@ export default class GenomicDataOverlayManager {
         svgText.setAttribute('x', x + xOffset)
         svgText.setAttribute('y', y + h / 2 + yOffset)
         svgText.setAttribute('font-family', 'Arial')
+        if (percent.hasOwnProperty('colorValue')) {  // then get text color based on background color 
+          svgText.setAttribute('fill', suggestTextColor(percent.colorValue)) 
+        }
         svgText.setAttribute('font-size', fontSize + '')
         svgText.innerHTML = text
 
@@ -400,6 +450,26 @@ export default class GenomicDataOverlayManager {
     this.genomicDataMap = this.genomicDataMap || {}
     this.visibleGenomicDataMapByType = this.visibleGenomicDataMapByType || {}
     this.groupedGenomicDataMap = this.groupedGenomicDataMap || {}
+    if (typeof genomicData == 'object') { 
+       if (!this.groupedGenomicDataMap.hasOwnProperty(groupID)) { this.groupedGenomicDataMap[groupID] = [] }
+       var dataSetNames = Object.keys(genomicData) // the different sets of data
+       /* BUG WARNING: if the gene names are different in different genomic datasets, these will be wrong. TODO: fix me*/
+       var geneNames = genomicData[dataSetNames[0]].map((gd) => {return gd.gene})
+       geneNames.forEach(gn => {
+         if (!this.genomicDataMap.hasOwnProperty(gn)) { this.genomicDataMap[gn] = {} }
+       })
+       dataSetNames.forEach((dsname, idx) => {
+         //let genomicDataSet = genomicData[dsname]
+         genomicData[dsname].forEach((gds) => {
+           this.genomicDataMap[gds.gene][dsname] = {}
+           this.genomicDataMap[gds.gene][dsname]['value'] = gds.value
+           this.genomicDataMap[gds.gene][dsname]['colorValue'] = gds.color
+         })
+         this.groupedGenomicDataMap[groupID].push(dsname)
+         this.visibleGenomicDataMapByType[dsname] = true
+       })
+       return
+    } else {
     const cancerTypes = []
 
     // By lines
@@ -443,6 +513,7 @@ export default class GenomicDataOverlayManager {
       for (let j = 1; j < lineContent.length; j++) {
         this.genomicDataMap[geneSymbol][cancerTypes[j - 1]] = lineContent[j]
       }
+    }
     }
   }
 
