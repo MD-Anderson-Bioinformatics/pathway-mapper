@@ -16,7 +16,7 @@ import GridOptionsManager from '../managers/GridOptionsManager'
 import { ILayoutProperties } from '../modals/LayoutProperties'
 import { EGridType } from '../modals/GridSettings'
 import ConfirmationModal from '../modals/ConfirmationModal'
-import NGCHM from './NGCHM';
+import NGCHM from './NGCHM'
 
 export default class PathwayActions {
   @observable
@@ -49,7 +49,7 @@ export default class PathwayActions {
     handleOpen: (modalId: EModalType) => void,
     isCBioPortal: boolean,
     isCollaborative: boolean,
-    isInIframe: boolean,
+    isInIframe: boolean
   ) {
     this.pathwayHandler = pathwayHandler
     this.profiles = profiles
@@ -150,6 +150,14 @@ export default class PathwayActions {
           console.log('No valid data')
         }
         this.editor.addGenomicData(request.responseText)
+      } else if (
+        request.readyState === XMLHttpRequest.DONE &&
+        request.status != 200
+      ) {
+        console.error({
+          msg: 'ERROR in overlaying graph file',
+          request: request
+        })
       }
     }
     request.open('POST', '/loadGraph')
@@ -369,35 +377,35 @@ export default class PathwayActions {
   processFile(file: File, isMerge: boolean) {
     const reader = new FileReader()
     reader.onload = e => {
-        const pathwayData: IPathwayData = SaveLoadUtility.parseGraph(
-          e.target.result,
-          false
-        )
-        console.log('Process File')
+      const pathwayData: IPathwayData = SaveLoadUtility.parseGraph(
+        e.target.result,
+        false
+      )
+      console.log('Process File')
 
-        if (isMerge) {
-          console.log('It is a merge')
-          this.editor.mergeGraph(pathwayData.nodes, pathwayData.edges)
-          const graphJSON = this.editor.cy.json()
+      if (isMerge) {
+        console.log('It is a merge')
+        this.editor.mergeGraph(pathwayData.nodes, pathwayData.edges)
+        const graphJSON = this.editor.cy.json()
 
-          //TODO change file name maybe, probabyly  not necessary ?
-          // Pathway nodes and edges are now combination of both previous and new pathway.
-          pathwayData.nodes = graphJSON.elements.nodes //this.editor.cy.nodes().map((node) => ({data: node.data()}));
-          pathwayData.edges = graphJSON.elements.edges //this.editor.cy.edges().map((edge) => ({data: edge.data()}));
-          pathwayData.title = 'Additional Pathway'
-        } else {
-          this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
-          this.fileManager.setPathwayInfo({
-            pathwayTitle: pathwayData.title,
-            pathwayDetails: pathwayData.description,
-            fileName: pathwayData.title + '.txt'
-          })
-        }
+        //TODO change file name maybe, probabyly  not necessary ?
+        // Pathway nodes and edges are now combination of both previous and new pathway.
+        pathwayData.nodes = graphJSON.elements.nodes //this.editor.cy.nodes().map((node) => ({data: node.data()}));
+        pathwayData.edges = graphJSON.elements.edges //this.editor.cy.edges().map((edge) => ({data: edge.data()}));
+        pathwayData.title = 'Additional Pathway'
+      } else {
+        this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
+        this.fileManager.setPathwayInfo({
+          pathwayTitle: pathwayData.title,
+          pathwayDetails: pathwayData.description,
+          fileName: pathwayData.title + '.txt'
+        })
+      }
 
-        this.pathwayHandler(pathwayData.title + '_imported')
-        this.resetUndoStack()
+      this.pathwayHandler(pathwayData.title + '_imported')
+      this.resetUndoStack()
     }
-    reader.readAsText (file)
+    reader.readAsText(file)
   }
 
   @autobind
@@ -424,8 +432,9 @@ export default class PathwayActions {
     this.undoRedoManager = undoRedoManager
     this.viewOperationsManager = viewOperationsManager
     this.gridOptionsManager = gridOptionsManager
-    if (this.ngchm != 'undefined') {  // define editor for ngchm
-     this.ngchm.editorHandler(editor) 
+    if (typeof this.ngchm != 'undefined') {
+      // define editor for ngchm
+      this.ngchm.editorHandler(editor)
     }
   }
 
