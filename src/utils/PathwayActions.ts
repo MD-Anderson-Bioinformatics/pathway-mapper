@@ -367,17 +367,10 @@ export default class PathwayActions {
 
   @autobind
   processFile(file: File, isMerge: boolean) {
-    // Create a new FormData object.
-    const formData = new FormData()
-    formData.append('graphFile', file)
-    const request = new XMLHttpRequest()
-    request.onreadystatechange = () => {
-      if (
-        request.readyState === XMLHttpRequest.DONE &&
-        request.status === 200
-      ) {
+    const reader = new FileReader()
+    reader.onload = e => {
         const pathwayData: IPathwayData = SaveLoadUtility.parseGraph(
-          request.responseText,
+          e.target.result,
           false
         )
         console.log('Process File')
@@ -403,14 +396,8 @@ export default class PathwayActions {
 
         this.pathwayHandler(pathwayData.title + '_imported')
         this.resetUndoStack()
-      } else {
-        console.error(
-          'Process File error: ' + request.status + ', ' + request.responseText
-        )
-      }
     }
-    request.open('POST', '/loadGraph')
-    request.send(formData)
+    reader.readAsText (file)
   }
 
   @autobind
