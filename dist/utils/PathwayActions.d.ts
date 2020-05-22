@@ -21,8 +21,10 @@ export default class PathwayActions {
     isCollaborative: boolean;
     viewOperationsManager: ViewOperationsManager;
     overlayUploader: any;
+    isInIframe: boolean;
+    ngchm: any;
     enabledType: EGridType;
-    constructor(pathwayHandler: (pathwayName: string) => void, profiles: IProfileMetaData[], fileManager: FileOperationsManager, handleOpen: (modalId: EModalType) => void, isCBioPortal: boolean, isCollaborative: boolean);
+    constructor(pathwayHandler: (pathwayName: string) => void, profiles: IProfileMetaData[], fileManager: FileOperationsManager, handleOpen: (modalId: EModalType) => void, isCBioPortal: boolean, isCollaborative: boolean, isInIframe: boolean);
     emphasiseQueryGenes(queryGenes: string[]): void;
     getSelectedNodes(): any;
     setLayoutProperties(layoutProperties: ILayoutProperties): void;

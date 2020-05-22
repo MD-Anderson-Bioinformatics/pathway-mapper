@@ -144,10 +144,6 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
 
   constructor(props: IPathwayMapperProps){
     super(props);
-    if (this.props.isInIframe) {
-      var ngchm = new NGCHM(this.editor, this.profiles)
-      this.ngchm = ngchm;
-    }
     this.fileManager = new FileOperationsManager();
     this.pathwayActions = new PathwayActions(this.pathwayHandler, this.profiles, this.fileManager, 
                                              this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative, this.props.isInIframe);

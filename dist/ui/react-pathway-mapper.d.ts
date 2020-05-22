@@ -21,6 +21,7 @@ interface IPathwayMapperProps {
     tableComponent?: (data: IPathwayMapperTable[], selectedPathway: string, onPathwaySelect: (pathway: string) => void) => JSX.Element;
     validGenes?: any;
     toast: any;
+    isInIframe: boolean;
 }
 export interface ICBioData {
     altered: number;

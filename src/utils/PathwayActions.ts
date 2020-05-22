@@ -378,7 +378,7 @@ export default class PathwayActions {
     const reader = new FileReader()
     reader.onload = e => {
       const pathwayData: IPathwayData = SaveLoadUtility.parseGraph(
-        e.target.result,
+        reader.result,
         false
       )
       console.log('Process File')

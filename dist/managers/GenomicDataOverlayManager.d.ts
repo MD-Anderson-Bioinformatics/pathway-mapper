@@ -9,6 +9,7 @@ export default class GenomicDataOverlayManager {
     private cy;
     constructor(cy: any);
     getEmptyGroupID(): number;
+    findMatchingGroup(keys: any): number;
     addGenomicDataLocally(genomicData: any, groupID: any): void;
     preparePortalGenomicDataShareDB(genomicData: any): {
         genomicDataMap: {};
