@@ -1,0 +1,9 @@
+node_modules/*
+src/*
+tools/*
+uploads/*
+build/*
+assets/*
+samples/*
+legacy_code/*
+

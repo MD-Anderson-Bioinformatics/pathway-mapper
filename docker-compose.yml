@@ -1,0 +1,14 @@
+##
+## Docker compose example for PathwayMapper
+##
+
+version: '2'
+
+services:
+  pathway_mapper:
+    build: 
+      context: .
+    container_name: pathway_mapper
+    ports:
+      - 9091:80
+    network_mode: bridge
