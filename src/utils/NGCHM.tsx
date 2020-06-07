@@ -334,9 +334,10 @@ export default class NGCHM {
 		// and the user specified groups.
 		// TODO: Restrict the labels to just those in the current pathway.
 		VAN.addMessageListener ('plot', function (msg) {
+			let axisName = (msg.config.axes[0].axisName === 'row') ? 'column' : 'row';
 			VAN.postMessage({
 				op: 'getTestData',
-				axisName: 'row',
+				axisName: axisName,
 				axisLabels: getLabels(),
 				testToRun: msg.config.options['Test to run'],
 				group1: msg.data.axes[0].ugroups[0].labels[0],
