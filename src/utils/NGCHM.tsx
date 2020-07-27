@@ -4,6 +4,7 @@
 import autobind from 'autobind-decorator'
 import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData} from '../ui/react-pathway-mapper'
+import {toast} from 'react-toastify';
 
 	//////////////////////
 	//
@@ -391,7 +392,10 @@ export default class NGCHM {
 		function addDataset (datasetLabel) {
 			if (knownDatasets.indexOf(datasetLabel) === -1) {
 				knownDatasets.push(datasetLabel);
-				profiles.push({profileId: datasetLabel, enabled: true});
+				profiles.push({profileId: datasetLabel, enabled: true, studyId: datasetLabel});
+				toast.success('Added test results "' + datasetLabel + '"', {position: 'top-left'});
+			} else {
+				toast.error('Warning: Overwrote Existing Test Name: "' + datasetLabel + '"', {position: 'top-left'});
 			}
 		}
 
