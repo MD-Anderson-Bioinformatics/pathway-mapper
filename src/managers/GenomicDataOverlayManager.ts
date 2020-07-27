@@ -488,7 +488,9 @@ export default class GenomicDataOverlayManager {
            this.genomicDataMap[gds.gene][dsname]['value'] = gds.value
            this.genomicDataMap[gds.gene][dsname]['colorValue'] = gds.color
          })
-         this.groupedGenomicDataMap[groupID].push(dsname)
+         if (this.groupedGenomicDataMap[groupID].indexOf(dsname) == -1) {
+           this.groupedGenomicDataMap[groupID].push(dsname)
+         }
          this.visibleGenomicDataMapByType[dsname] = true
        })
        return
