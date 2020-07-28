@@ -295,15 +295,23 @@ export default class GenomicDataOverlayManager {
             textColor: recommented text color (hex)
     */
     function suggestTextColor(backgroundColor) {
-      let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(backgroundColor)
-      let red = parseInt(result[1], 16)/225.0 
-      if (red <= 0.03928) { red = red / 12.92 } else { red = Math.pow(red+0.055/1.055, 2.4) }
-      let blue = parseInt(result[2], 16)/225.0
-      if (blue <= 0.03928) { blue = blue / 12.92 } else { blue = Math.pow(blue+0.055/1.055, 2.4) }
-      let green = parseInt(result[3], 16)/225.0
-      if (green <= 0.03928) { green = green / 12.92 } else { green = Math.pow(green+0.055/1.055, 2.4) }
-      let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-      if (luminance > 0.179) {
+      function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+           r: parseInt(result[1], 16),
+           g: parseInt(result[2], 16),
+           b: parseInt(result[3], 16)
+        } : null;
+      }
+      let rgbColor = hexToRgb(backgroundColor);
+      let red = rgbColor.r / 255.0;
+      let green = rgbColor.g / 255.0;
+      let blue = rgbColor.b / 255.0;
+      if (red <= 0.03928) { red = red / 12.92 } else { red = Math.pow((red+0.055)/1.055, 2.4) }
+      if (green <= 0.03928) { green = green / 12.92 } else { green = Math.pow((green+0.055)/1.055, 2.4) }
+      if (blue <= 0.03928) { blue = blue / 12.92 } else { blue = Math.pow((blue+0.055)/1.055, 2.4) }
+      let relativeLuminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+      if (relativeLuminance > 0.179) {
         return '#000000' // black text (background color is light)
       } else {
         return '#ffffff' // white text (background color is dark)
