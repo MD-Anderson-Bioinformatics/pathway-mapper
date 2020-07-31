@@ -33,6 +33,7 @@ import CBioHelpModal from '../modals/CBioHelpModal';
 import "../css/pmv1.css";
 import "../css/pmv2.css";
 import '../css/qtip.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 import NGCHM from '../utils/NGCHM';
 

@@ -8,6 +8,7 @@ import GridOptionsManager from '../managers/GridOptionsManager';
 import "../css/pmv1.css";
 import "../css/pmv2.css";
 import '../css/qtip.css';
+import 'react-toastify/dist/ReactToastify.css';
 interface IPathwayMapperProps {
     isCBioPortal: boolean;
     genes: any[];
@@ -100,7 +101,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     includePathway(pathwayData?: IPathwayData, pathwayName?: string): void;
     extractAllGenes(): void;
     loadRedirectedPortalData(): void;
-    readonly profileEnabledMap: {};
+    get profileEnabledMap(): {};
     doesProfileExist(profileId: string): boolean;
     loadFromCBio(dataTypes: {
         [dataType: string]: IDataTypeMetaData;

@@ -4,6 +4,7 @@
 import autobind from 'autobind-decorator'
 import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData} from '../ui/react-pathway-mapper'
+import {toast} from 'react-toastify';
 
 	//////////////////////
 	//
@@ -293,9 +294,9 @@ export default class NGCHM {
 	editorHandler(editor) {
 		this.editor = editor;
 	}
+
 	constructor(profiles: IProfileMetaData[]) {
-		this.profiles = profiles
-		const knownDatasets = [];
+		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
 		const VAN = new Vanodi ({
@@ -388,10 +389,17 @@ export default class NGCHM {
 			this.editor.addGenomicData(objToSend);
 		});
 
+		/* Add datasetLabel to profiles if a profile with profileId = datasetLabel is not already there.
+		   If profileId is already there, give user warning that that data for that profileId was overwritten.
+		   Use the same toast message as used for cBioPortal addition, but move it to left (because of gear menu)
+		*/
 		function addDataset (datasetLabel) {
-			if (knownDatasets.indexOf(datasetLabel) === -1) {
-				knownDatasets.push(datasetLabel);
-				profiles.push({profileId: datasetLabel, enabled: true});
+			existingProfiles = profiles.map(pr => {return pr.profileId})
+			if (existingProfiles.indexOf(datasetLabel) === -1) {
+				profiles.push({profileId: datasetLabel, enabled: true, studyId: datasetLabel});
+				toast.success(datasetLabel + ' successfully loaded from NG-CHM', {position: 'top-left'});
+			} else {
+				toast.error('Warning: Overwrote existing test name: "' + datasetLabel + '"', {position: 'top-left'});
 			}
 		}
 

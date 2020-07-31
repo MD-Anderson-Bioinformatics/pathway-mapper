@@ -295,11 +295,23 @@ export default class GenomicDataOverlayManager {
             textColor: recommented text color (hex)
     */
     function suggestTextColor(backgroundColor) {
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(backgroundColor)
-      var red = parseInt(result[1], 16)
-      var blue = parseInt(result[2], 16)
-      var green = parseInt(result[3], 16)
-      if (red * 0.299 + green * 0.587 + blue * 0.114 > 186) {
+      function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+           r: parseInt(result[1], 16),
+           g: parseInt(result[2], 16),
+           b: parseInt(result[3], 16)
+        } : null;
+      }
+      let rgbColor = hexToRgb(backgroundColor);
+      let red = rgbColor.r / 255.0;
+      let green = rgbColor.g / 255.0;
+      let blue = rgbColor.b / 255.0;
+      if (red <= 0.03928) { red = red / 12.92 } else { red = Math.pow((red+0.055)/1.055, 2.4) }
+      if (green <= 0.03928) { green = green / 12.92 } else { green = Math.pow((green+0.055)/1.055, 2.4) }
+      if (blue <= 0.03928) { blue = blue / 12.92 } else { blue = Math.pow((blue+0.055)/1.055, 2.4) }
+      let relativeLuminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+      if (relativeLuminance > 0.179) {
         return '#000000' // black text (background color is light)
       } else {
         return '#ffffff' // white text (background color is dark)
@@ -488,7 +500,9 @@ export default class GenomicDataOverlayManager {
            this.genomicDataMap[gds.gene][dsname]['value'] = gds.value
            this.genomicDataMap[gds.gene][dsname]['colorValue'] = gds.color
          })
-         this.groupedGenomicDataMap[groupID].push(dsname)
+         if (this.groupedGenomicDataMap[groupID].indexOf(dsname) == -1) {
+           this.groupedGenomicDataMap[groupID].push(dsname)
+         }
          this.visibleGenomicDataMapByType[dsname] = true
        })
        return
