@@ -299,6 +299,7 @@ export default class NGCHM {
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
+		var pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -325,10 +326,17 @@ export default class NGCHM {
 			VAN.postMessage ({ op: 'getLabels', axisName: 'row' });
 		});
 
-		// Save the labels
-		VAN.addMessageListener ('labels', function (msg) {
-			setLabels (msg.labels);
-		});
+		/*
+			Message listener to get labels and pathway reference information from NGCHM
+			
+			labels: list of labels (e.g. gene names)
+			pathwayReferences: object of pathway references to external databases. 
+			                   (e.g.: {'ndex': [< UUID of pathway 1 >, < UUID of pathway 2 >]})
+		*/
+		VAN.addMessageListener('labels', (msg) => {
+			labels = msg.labels;
+			pathwayReferences = msg.pathways;
+		})
 
 		// After the user has selected the groups and options,
 		// ask the host to send the test results for the known genes
@@ -408,9 +416,6 @@ export default class NGCHM {
 			return this.editor.getGeneSymbols();
 		}
 
-		function setLabels (l) {
-			labels = l;
-		}
 		this.VAN = VAN;
 	} // end NGCHM constructor
 }
