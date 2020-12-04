@@ -5,6 +5,7 @@ import autobind from 'autobind-decorator'
 import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData} from '../ui/react-pathway-mapper'
 import {toast} from 'react-toastify';
+import LoadFromExternalDatabase from '../utils/LoadFromExternalDatabase'
 
 	//////////////////////
 	//
@@ -268,6 +269,8 @@ export default class NGCHM {
 	editor: EditorActionsManager
 	profiles: IProfileMetaData[]
 	VAN: any;
+	pathwayReferences: any;
+
 	/* Function to post message to NGCHM to select labels of genes selected on pathway */
 	highlightSelected = () => { 
 		var selectedGeneSymbols = []
@@ -299,7 +302,7 @@ export default class NGCHM {
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
-		var pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
+		var pathwayReferences = {mary: 'zeta was here'} // References to pathways in external databases (e.g. NDEx)
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -335,7 +338,15 @@ export default class NGCHM {
 		*/
 		VAN.addMessageListener('labels', (msg) => {
 			labels = msg.labels;
-			pathwayReferences = msg.pathways;
+			console.log({mar4: 'before adding to pathwayReferences', pathwayReferences: this.pathwayReferences})
+			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
+				this.pathwayReferences = msg.pathways;
+				console.log({mar4: 'added to pathwayReferences', pathwayReferences: this.pathwayReferences})
+				let loadFromExternal = new LoadFromExternalDatabase(this.editor)
+				if (this.pathwayReferences.hasOwnProperty('ndex') && this.pathwayReferences['ndex'].length > 0) {
+					loadFromExternal.ndex(this.pathwayReferences['ndex'][0])
+				}
+			}
 		})
 
 		// After the user has selected the groups and options,
@@ -417,6 +428,7 @@ export default class NGCHM {
 		}
 
 		this.VAN = VAN;
+		this.pathwayReferences = pathwayReferences;
 	} // end NGCHM constructor
 }
 
