@@ -338,10 +338,8 @@ export default class NGCHM {
 		*/
 		VAN.addMessageListener('labels', (msg) => {
 			labels = msg.labels;
-			console.log({mar4: 'before adding to pathwayReferences', pathwayReferences: this.pathwayReferences})
 			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
 				this.pathwayReferences = msg.pathways;
-				console.log({mar4: 'added to pathwayReferences', pathwayReferences: this.pathwayReferences})
 				let loadFromExternal = new LoadFromExternalDatabase(this.editor)
 				if (this.pathwayReferences.hasOwnProperty('ndex') && this.pathwayReferences['ndex'].length > 0) {
 					loadFromExternal.ndex(this.pathwayReferences['ndex'][0])

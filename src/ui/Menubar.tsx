@@ -23,8 +23,6 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
   }
 
     render(){
-			console.log({mar4: 'top of Menubar render', this: this
-				})
         const nodeTypes = ["Gene", "Family", "Complex", "Compartment", "Process"];
         const edgeTypes = ["Activates", "Inhibits", "Induces", "Represses", "Binds"];
 
@@ -76,13 +74,9 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <MenuItem eventKey={92} onClick={() => {
-                      console.log({mar4:'clicked ndex'}); 
-                      loadFromExternal.ndex('54a9a35b-1e5f-11e8-b939-0ac135e8bacf');
-                   }}>Import from NDEx...</MenuItem>
+                  <MenuItem eventKey={1.1} onClick={() => {this.props.handleOpen(EModalType.NDEX);}}>Import from NDEx...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.merge();}}>Merge With...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.export(false);}}>Export</MenuItem>
-                  <MenuItem eventKey={1.1} onClick={() => {console.log({mar4: 'rerender clicked'});this.render();}}>Rerender</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="Export as" id="basic-nav-export">
                     <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.saveAs("JPEG");}}>JPEG</MenuItem>
                     <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.saveAs("PNG");}}>PNG</MenuItem>
@@ -170,13 +164,4 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
         );
     }
 
-		componentDidUpdate(prevProps, prevState, snapshot) {
-			console.log({mar4: 'copmonenetDidUpdate in menubar', pathwayReferences: this.props.pathwayActions.ngchm.pathwayReferences})
-			this.render()
-			console.log({mar4: 'called render for menubar'})
-		}
-
-		componentDidMount() {
-			console.log({mar4: 'mount Menubar'})
-		}
 }

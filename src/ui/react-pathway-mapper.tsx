@@ -20,6 +20,7 @@ import ProfilesModal from '../modals/ProfilesModal';
 
 import {toast, ToastContainer} from 'react-toastify';
 import AboutModal from '../modals/AboutModal';
+import NDExModal from '../modals/NDExQueryModal';
 import ReactTooltip from 'react-tooltip';
 import PathwayDetailsModal from '../modals/PathwayDetailsModal';
 import ViewOperationsManager from '../managers/ViewOperationsManager';
@@ -71,6 +72,7 @@ export enum EModalType{
   PW_DETAILS,
   GRID,
   HELP,
+  NDEX,
   LAYOUT,
   CHELP
 }
@@ -496,6 +498,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
             <ConfirmationModal isModalShown={this.isModalShown[EModalType.CONFIRMATION]} handleClose={this.handleClose} />
             <CBioHelpModal isModalShown={this.isModalShown[EModalType.CHELP]} handleClose={this.handleClose}/>
             <AboutModal isModalShown={this.isModalShown[EModalType.ABOUT]} handleClose={this.handleClose}/>
+            <NDExModal isModalShown={this.isModalShown[EModalType.NDEX]} editor={this.editor} handleClose={this.handleClose}/>
           </div>)
           }
           { !this.props.isCBioPortal &&
