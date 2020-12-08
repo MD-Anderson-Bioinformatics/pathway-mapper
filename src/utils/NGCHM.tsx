@@ -6,6 +6,7 @@ import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData} from '../ui/react-pathway-mapper'
 import {toast} from 'react-toastify';
 import LoadFromExternalDatabase from '../utils/LoadFromExternalDatabase'
+import PathwayActions from '../utils/PathwayActions'
 
 	//////////////////////
 	//
@@ -269,6 +270,7 @@ export default class NGCHM {
 	editor: EditorActionsManager
 	profiles: IProfileMetaData[]
 	VAN: any;
+	pathwayActions: PathwayActions
 	pathwayReferences: any;
 
 	/* Function to post message to NGCHM to select labels of genes selected on pathway */
@@ -298,7 +300,8 @@ export default class NGCHM {
 		this.editor = editor;
 	}
 
-	constructor(profiles: IProfileMetaData[]) {
+	constructor(profiles: IProfileMetaData[], pathwayActions: PathwayActions) {
+		this.pathwayActions = pathwayActions;
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
@@ -340,7 +343,7 @@ export default class NGCHM {
 			labels = msg.labels;
 			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
 				this.pathwayReferences = msg.pathways;
-				let loadFromExternal = new LoadFromExternalDatabase(this.editor)
+				let loadFromExternal = new LoadFromExternalDatabase(this.editor,this.pathwayActions)
 				if (this.pathwayReferences.hasOwnProperty('ndex') && this.pathwayReferences['ndex'].length > 0) {
 					loadFromExternal.ndex(this.pathwayReferences['ndex'][0])
 				}

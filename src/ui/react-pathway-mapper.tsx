@@ -498,7 +498,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
             <ConfirmationModal isModalShown={this.isModalShown[EModalType.CONFIRMATION]} handleClose={this.handleClose} />
             <CBioHelpModal isModalShown={this.isModalShown[EModalType.CHELP]} handleClose={this.handleClose}/>
             <AboutModal isModalShown={this.isModalShown[EModalType.ABOUT]} handleClose={this.handleClose}/>
-            <NDExModal isModalShown={this.isModalShown[EModalType.NDEX]} editor={this.editor} handleClose={this.handleClose}/>
+            <NDExModal isModalShown={this.isModalShown[EModalType.NDEX]} pathwayActions={this.pathwayActions} handleClose={this.handleClose}/>
           </div>)
           }
           { !this.props.isCBioPortal &&

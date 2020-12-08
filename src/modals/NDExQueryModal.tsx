@@ -7,10 +7,11 @@ import EditorActionsManager from '../managers/EditorActionsManager'
 import { observer } from 'mobx-react';
 import {toast} from 'react-toastify';
 import LoadFromExternalDatabase from '../utils/LoadFromExternalDatabase'
+import PathwayActions from '../utils/PathwayActions'
 
 interface INDExModalProps {
 	isModalShown: boolean;
-	editor: EditorActionsManager;
+	pathwayActions: PathwayActions;
 	handleClose : Function;
 }
 
@@ -50,7 +51,7 @@ export default class NDExModal extends React.Component<INDExModalProps, {}>{
 									</InputGroup>
 							</div>
 						<Button onClick={() => {
-								let loadFromExternal = new LoadFromExternalDatabase(this.props.editor);
+								let loadFromExternal = new LoadFromExternalDatabase(this.props.pathwayActions.editor, this.props.pathwayActions);
 								loadFromExternal.ndex(NDExModal.ndexmodal.pathwayToGet);
 								this.props.handleClose(EModalType.NDEX);
 								}}>Load Pathway

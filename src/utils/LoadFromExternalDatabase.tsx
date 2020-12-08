@@ -13,10 +13,12 @@ import PathwayActions from '../utils/PathwayActions'
 		- converting pathway information to PathwayMapper format
 */
 export default class LoadFromExternalDatabase {
-	editor: EditorActionsManager 
+	editor: EditorActionsManager
+	pathwayActions: PathwayActions
 
-	constructor(editor) {
+	constructor(editor,pathwayActions) {
 		this.editor = editor
+		this.pathwayActions = pathwayActions
 	}
 
 	/*
@@ -35,6 +37,11 @@ export default class LoadFromExternalDatabase {
 				let pmFormat = this.cx2pm(cxJSON)
 				let pathwayData: IPathwayData = SaveLoadUtility.parseGraph(pmFormat['pathway'], false)
 				this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
+				this.pathwayActions.setPathwayInfo({
+					pathwayTitle: pmFormat['name'],
+					pathwayDetails: pmFormat['description'],
+					fileName: 'ndex_pathway.txt'
+				})
 				toast.success('Loaded NDEx pathway: '+pmFormat['name'], {position: 'top-left'})
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				let jsonResponse = JSON.parse(request.response)
@@ -56,6 +63,7 @@ export default class LoadFromExternalDatabase {
 			Object with keys:
 				pathway: string pathway in PathwayMapper format
 				name: string name of pathway
+				description: string description of pathway
 	*/
 	cx2pm = (cxJSON) => {
 		let pathway = ''
@@ -63,6 +71,7 @@ export default class LoadFromExternalDatabase {
 		let cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['networkAttributes']))
 		let networkAttributesList = cxEntry[0]['networkAttributes']
 		let name = networkAttributesList.filter( e => e.n === 'name')[0]['v']
+		let description = networkAttributesList.filter( e => e.n === 'description')[0]['v']
 		pathway += name + '\n\n\n--NODE_NAME\tNODE_ID\tNODE_TYPE\tPARENT_ID\tPOSX\tPOSY\tWIDTH\tHEIGHT--\n'
 		// get nodes of pathway
 		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['nodes']))
@@ -100,7 +109,7 @@ export default class LoadFromExternalDatabase {
 		edges.forEach((e) => {
 			pathway += e.id + '\t' + e.source + '\t' + e.target + '\t\n'
 		})
-		return({pathway: pathway, name: name})
+		return({pathway: pathway, name: name, description: description})
 	}
 } // end class LaodFromExternalDatabase
 

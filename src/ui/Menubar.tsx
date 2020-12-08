@@ -38,7 +38,7 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
             pathwayDropdownData[pwHead] = [pwName];
           }
         }
-        let loadFromExternal = new LoadFromExternalDatabase(this.props.pathwayActions.editor)
+        let loadFromExternal = new LoadFromExternalDatabase(this.props.pathwayActions.editor,this.props.pathwayActions)
 
         return(
             <Navbar className="pathway-navbar">

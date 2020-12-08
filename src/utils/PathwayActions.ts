@@ -60,7 +60,7 @@ export default class PathwayActions {
     this.enabledType = EGridType.NONE
     this.isInIframe = isInIframe
     if (this.isInIframe) {
-      this.ngchm = new NGCHM(this.profiles)
+      this.ngchm = new NGCHM(this.profiles, this)
     }
   }
 
@@ -273,7 +273,7 @@ export default class PathwayActions {
     this.editor.highlightSelected()
     if (this.isInIframe) {
       if (typeof this.ngchm === 'undefined') {
-        this.ngchm = new NGCHM(this.profiles)
+        this.ngchm = new NGCHM(this.profiles,this)
       }
       this.ngchm.highlightSelected()
     }
@@ -367,7 +367,7 @@ export default class PathwayActions {
     this.editor.removeAllHighlight()
     if (this.isInIframe) {
       if (typeof this.ngchm === 'undefined') {
-        this.ngchm = new NGCHM(this.profiles)
+        this.ngchm = new NGCHM(this.profiles,this)
       }
       this.ngchm.highlightSelected()
     }
