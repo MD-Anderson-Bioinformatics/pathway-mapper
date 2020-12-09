@@ -344,8 +344,8 @@ export default class NGCHM {
 			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
 				this.pathwayReferences = msg.pathways;
 				let loadFromExternal = new LoadFromExternalDatabase(this.editor,this.pathwayActions)
-				if (this.pathwayReferences.hasOwnProperty('ndex') && this.pathwayReferences['ndex'].length > 0) {
-					loadFromExternal.ndex(this.pathwayReferences['ndex'][0])
+				if (this.pathwayReferences.hasOwnProperty('ndexUUID') && this.pathwayReferences['ndexUUID'] !== undefined ) {
+					loadFromExternal.ndex(this.pathwayReferences['ndexUUID'])
 				}
 			}
 		})
