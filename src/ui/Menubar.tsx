@@ -74,7 +74,14 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <MenuItem eventKey={1.1} onClick={() => {this.props.handleOpen(EModalType.NDEX);}}>Import from NDEx...</MenuItem>
+                  <MenuItem eventKey={1.1} onClick={() => {
+                    if(this.props.pathwayActions.doesCyHaveElements()){
+                      this.props.handleOpen(EModalType.CONFIRMATION);
+                      ConfirmationModal.pendingFunction = () => {this.props.handleOpen(EModalType.NDEX)}
+                    } else {
+                      this.props.handleOpen(EModalType.NDEX);
+                    }
+                   }}>Import from NDEx...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.merge();}}>Merge With...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.export(false);}}>Export</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="Export as" id="basic-nav-export">
