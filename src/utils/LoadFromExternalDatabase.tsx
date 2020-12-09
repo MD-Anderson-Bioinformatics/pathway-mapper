@@ -40,8 +40,9 @@ export default class LoadFromExternalDatabase {
 				this.pathwayActions.setPathwayInfo({
 					pathwayTitle: pmFormat['name'],
 					pathwayDetails: pmFormat['description'],
-					fileName: 'ndex_pathway.txt'
+					fileName: pmFormat['name'].replace(/[^a-z0-9]/gi, '_').toLowerCase()
 				})
+				this.pathwayActions.pathwayHandler(pmFormat['name']);
 				toast.success('Loaded NDEx pathway: '+pmFormat['name'], {position: 'top-left'})
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				let jsonResponse = JSON.parse(request.response)
@@ -78,7 +79,8 @@ export default class LoadFromExternalDatabase {
 		let cxNodes = cxEntry[0]['nodes']
 		let nodes = [] // <-- nodes to use in pathway
 		cxNodes.forEach((n) => {
-			let elem = {id: n['@id'], name: n['n'], type: n['r']}
+			// setting type to 'GENE' because that's the only node type recognized by PathwayMapper
+			let elem = {id: n['@id'], name: n['n'], type: 'GENE'} 
 			nodes.push(elem)
 		})
 		// get cartesian layout
@@ -92,8 +94,8 @@ export default class LoadFromExternalDatabase {
 				}
 			})
 		})
-		let width = 100; 
-		let height = 20;
+		let width = 150; 
+		let height = 52;
 		nodes.forEach((n) => {
 			pathway += n.name+'\t'+n.id+'\t'+n.type+'\t-1\t'+n.x+'\t'+n.y+'\t'+width+'\t'+height+'\n'
 		})

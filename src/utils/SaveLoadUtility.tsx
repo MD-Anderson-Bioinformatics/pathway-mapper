@@ -262,8 +262,6 @@ export default class SaveLoadUtility{
         break;
       }
 
-      if(!isArray)
-      console.log(lines);
       var lineData = lines[i].split('\t');
       var edgeID = lineData[0];
       var edgeSource = lineData[1];
