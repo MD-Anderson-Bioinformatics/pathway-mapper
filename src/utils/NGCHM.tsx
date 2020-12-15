@@ -305,7 +305,7 @@ export default class NGCHM {
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
-		var pathwayReferences = {mary: 'zeta was here'} // References to pathways in external databases (e.g. NDEx)
+		this.pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -342,10 +342,12 @@ export default class NGCHM {
 		VAN.addMessageListener('labels', (msg) => {
 			labels = msg.labels;
 			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
-				this.pathwayReferences = msg.pathways;
 				let loadFromExternal = new LoadFromExternalDatabase(this.editor,this.pathwayActions)
-				if (this.pathwayReferences.hasOwnProperty('ndexUUID') && this.pathwayReferences['ndexUUID'] !== undefined ) {
-					loadFromExternal.ndex(this.pathwayReferences['ndexUUID'])
+				if (msg.pathways.hasOwnProperty('ndexUUIDs')) { // then NGCHM had pathways from NDEx
+					this.pathwayReferences['ndexUUIDs'] = msg.pathways.ndexUUIDs.split(',')
+				}
+				if (this.pathwayReferences.hasOwnProperty('ndexUUIDs') && this.pathwayReferences['ndexUUIDs'].length > 0) {
+					loadFromExternal.ndex(this.pathwayReferences['ndexUUIDs'][0])
 				}
 			}
 		})
@@ -429,7 +431,6 @@ export default class NGCHM {
 		}
 
 		this.VAN = VAN;
-		this.pathwayReferences = pathwayReferences;
 	} // end NGCHM constructor
 }
 
