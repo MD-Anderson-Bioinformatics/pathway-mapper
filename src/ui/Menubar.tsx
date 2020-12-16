@@ -6,20 +6,27 @@ import autobind from 'autobind-decorator';
 import SaveLoadUtility from '../utils/SaveLoadUtility';
 import { EModalType } from './react-pathway-mapper';
 import ConfirmationModal from '../modals/ConfirmationModal';
-import LoadFromExternalDatabase from '../utils/LoadFromExternalDatabase'
+import {observer} from 'mobx-react';
+import {observable,computed} from 'mobx';
 
 interface IMenubarProps{
     pathwayActions: PathwayActions;
     handleOpen: (modalId: EModalType) => void;
     setActiveEdge: Function;
+    ngchm: any;
+    pathwayReferences: any;
 }
 
 
+@observer
 export default class Menubar extends React.Component<IMenubarProps, {}>{
 
 
+        @observable
+        pathwayReferences: any;
     constructor(props: IMenubarProps){
         super(props);
+
   }
 
     render(){
@@ -38,7 +45,6 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
             pathwayDropdownData[pwHead] = [pwName];
           }
         }
-        let loadFromExternal = new LoadFromExternalDatabase(this.props.pathwayActions.editor,this.props.pathwayActions)
 
         return(
             <Navbar className="pathway-navbar">
@@ -74,14 +80,31 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <MenuItem eventKey={1.1} onClick={() => {
-                    if(this.props.pathwayActions.doesCyHaveElements()){
-                      this.props.handleOpen(EModalType.CONFIRMATION);
-                      ConfirmationModal.pendingFunction = () => {this.props.handleOpen(EModalType.NDEX)}
-                    } else {
-                      this.props.handleOpen(EModalType.NDEX);
-                    }
-                   }}>Import from NDEx...</MenuItem>
+                  <NavDropdown className="dropdown-submenu" eventKey={1} title="External Database" id="basic-nav-External">
+                        { 
+                            /* Add a sub-menu item for each external database (e.g. 'NDEx') */
+                          Object.keys(this.props.pathwayReferences).map((database) => {
+                            return (
+                               <NavDropdown id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
+                                  {
+                                     /* Add entry for each pathway in that database. Clicking on entry loads the pathway. */
+                                     Object.keys(this.props.pathwayReferences[database]).map((uuid) => 
+                                       <MenuItem onClick={() => {
+                                           if (this.props.pathwayActions.doesCyHaveElements()) {
+                                            this.props.handleOpen(EModalType.CONFIRMATION);
+                                            ConfirmationModal.pendingFunction = () => {this.props.ngchm.ndex(uuid)}
+                                           } else {
+                                            this.props.ngchm.ndex(uuid)
+                                           }
+                                         }}>{this.props.pathwayReferences[database][uuid]}
+                                       </MenuItem>
+                                     )
+                                   }
+                                  
+                               </NavDropdown>);
+                          })
+                        }
+                  </NavDropdown>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.merge();}}>Merge With...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.export(false);}}>Export</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="Export as" id="basic-nav-export">
@@ -140,10 +163,12 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.showAll();}}>Show All Nodes</MenuItem>
                 </NavDropdown>
                 <NavDropdown eventKey={4} title="Highlight" id="basic-nav-highlight">
-                  <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.highlightSelected}>Highlight Selected</MenuItem>
+                  <MenuItem eventKey={4.1} onClick={() => {this.props.pathwayActions.highlightSelected();
+                     this.props.ngchm.highlightSelected();}}>Highlight Selected</MenuItem>
                   <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.highlightNeighbours}>Highlight Neighbors Of Selected</MenuItem>
                   <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.validateGenes}>Identify Invalid Genes</MenuItem>
-                  <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.removeAllHighlight}>Remove All Highlights</MenuItem>
+                  <MenuItem eventKey={4.1} onClick={() => {this.props.pathwayActions.removeAllHighlight();
+                     this.props.pathwayActions.highlightSelected();}}>Remove All Highlights</MenuItem>
                 </NavDropdown>
                 <NavDropdown eventKey={5} title="Alteration %" id="basic-nav-alteration">
                   <MenuItem eventKey={5.1} onClick={() => {this.props.pathwayActions.uploadOverlay();}}>Load From File...</MenuItem>

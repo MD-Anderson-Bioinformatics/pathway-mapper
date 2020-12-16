@@ -3,10 +3,11 @@
 // For interaction with NG-CHM
 import autobind from 'autobind-decorator'
 import EditorActionsManager from '../managers/EditorActionsManager'
-import {IProfileMetaData} from '../ui/react-pathway-mapper'
+import {IProfileMetaData, IPathwayData} from '../ui/react-pathway-mapper'
 import {toast} from 'react-toastify';
-import LoadFromExternalDatabase from '../utils/LoadFromExternalDatabase'
 import PathwayActions from '../utils/PathwayActions'
+import {observable} from 'mobx';
+import SaveLoadUtility from './SaveLoadUtility'
 
 	//////////////////////
 	//
@@ -271,9 +272,10 @@ export default class NGCHM {
 	profiles: IProfileMetaData[]
 	VAN: any;
 	pathwayActions: PathwayActions
+	@observable
 	pathwayReferences: any;
 
-	/* Function to post message to NGCHM to select labels of genes selected on pathway */
+	/* Function to post message to NGCHM to select heat map labels of genes selected on pathway */
 	highlightSelected = () => { 
 		var selectedGeneSymbols = []
 		var selectedNodes = this.editor.cy.elements(':selected') // nodes selected 
@@ -300,12 +302,135 @@ export default class NGCHM {
 		this.editor = editor;
 	}
 
+	/*
+		Function to query NDEX for a given pathway and load that pathway
+		into PathwayMapper.
+		
+		Updates pathway information in pathwayActions. 
+		
+		Inputs:
+			uuid: string UUID of specific pathway from NDEx
+	*/
+	ndex = (uuid) => {
+		let url = 'http://www.ndexbio.org/v2/network/' + uuid 
+		let request = new XMLHttpRequest()
+		request.onreadystatechange = () => {
+			if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+				let cxJSON = JSON.parse(request.responseText);
+				let pmFormat = this.cx2pm(cxJSON)
+				let pathwayData: IPathwayData = SaveLoadUtility.parseGraph(pmFormat['pathway'], false)
+				this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
+				this.pathwayActions.setPathwayInfo({
+					pathwayTitle: pmFormat['name'],
+					pathwayDetails: pmFormat['description'],
+					fileName: pmFormat['name'].replace(/[^a-z0-9]/gi, '_').toLowerCase()
+				})
+				this.pathwayActions.pathwayHandler(pmFormat['name']);
+				toast.success('Loaded NDEx pathway: '+pmFormat['name'], {position: 'top-left'})
+			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
+				let jsonResponse = JSON.parse(request.response)
+				toast.error('NDEx error: '+jsonResponse.message, {position: 'top-left'})
+				console.error('Error getting uuid "'+uuid+'" from NDEx. NDEx error message: ' + jsonResponse.message)
+			}
+		}
+		request.open('GET',url)
+		request.setRequestHeader('Content-Type', 'application/json')
+		request.send()
+	}
+
+	/* Function to get pathay summary from NDEx.
+		
+		Queries NDEx to get pathway summary information. The purpose is to
+		get pathway names for display in the Network -> External Databse -> NDEx
+		dropdown. This function updates pathwayReferences, a mobx observable,
+		which triggers a re-rendering of the Menubar component.
+
+		Inputs:
+			uuid: string UUID of specific pathway from NDEx
+	*/
+	ndexSummary = (uuid) => {
+		let url = 'http://www.ndexbio.org/v2/network/' + uuid + '/summary'
+		let request = new XMLHttpRequest()
+		request.onreadystatechange = () => {
+			if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+				let name = JSON.parse(request.responseText)['name']
+				this.pathwayReferences['NDEx'][uuid] = name
+			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
+				console.error('Error getting NDEx summary data for '+uuid)
+				this.pathwayReferences['NDEx'][uuid] = 'unknown'
+			}
+		}
+		request.open('GET',url)
+		request.setRequestHeader('Content-Type', 'application/json')
+		request.send()
+	}
+
+	/* 
+		Function to convert from CX format to PathwayMapper format 
+		
+		Inputs:
+			cxJSON: Object CX object describing pathway
+		Returns:
+			Object with keys:
+				pathway: string pathway in PathwayMapper format
+				name: string name of pathway
+				description: string description of pathway
+	*/
+	cx2pm = (cxJSON) => {
+		let pathway = ''
+		// get name of pathway
+		let cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['networkAttributes']))
+		let networkAttributesList = cxEntry[0]['networkAttributes']
+		let name = networkAttributesList.filter( e => e.n === 'name')[0]['v']
+		let description = networkAttributesList.filter( e => e.n === 'description')[0]['v']
+		pathway += name + '\n\n\n--NODE_NAME\tNODE_ID\tNODE_TYPE\tPARENT_ID\tPOSX\tPOSY\tWIDTH\tHEIGHT--\n'
+		// get nodes of pathway
+		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['nodes']))
+		let cxNodes = cxEntry[0]['nodes']
+		let nodes = [] // <-- nodes to use in pathway
+		cxNodes.forEach((n) => {
+			// setting type to 'GENE' because that's the only node type recognized by PathwayMapper
+			let elem = {id: n['@id'], name: n['n'], type: 'GENE'} 
+			nodes.push(elem)
+		})
+		// get cartesian layout
+		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['cartesianLayout']))
+		let cartesianLayoutList = cxEntry[0]['cartesianLayout']
+		cartesianLayoutList.forEach((cl) => {
+			nodes.forEach((n) => {
+				if (n.id == cl.node) {
+					n['x'] = cl['x']
+					n['y'] = cl['y']
+				}
+			})
+		})
+		let width = 150; 
+		let height = 52;
+		nodes.forEach((n) => {
+			pathway += n.name+'\t'+n.id+'\t'+n.type+'\t-1\t'+n.x+'\t'+n.y+'\t'+width+'\t'+height+'\n'
+		})
+		// get edges
+		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['edges']))
+		let edgesList = cxEntry[0]['edges']
+		let edges = []  // <-- edges to use in pathway
+		edgesList.forEach((e) => {
+			let elem = {id: 'edg_'+e['@id'], source: e['s'], target: e['t']}
+			edges.push(elem)
+		})
+		pathway += '\n--EDGE_ID\tSOURCE\tTARGET\tEDGE_TYPE\tINTERACTION_PUBMED_ID\tEDGE_NAME\tEDGE_BENDS\n'
+		edges.forEach((e) => {
+			pathway += e.id + '\t' + e.source + '\t' + e.target + '\t\n'
+		})
+		return({pathway: pathway, name: name, description: description})
+	}
+
+
 	constructor(profiles: IProfileMetaData[], pathwayActions: PathwayActions) {
 		this.pathwayActions = pathwayActions;
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
-		this.pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
+		this.pathwayReferences = {'NDEx':{}} // References to pathways in external databases (e.g. NDEx)
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -335,19 +460,20 @@ export default class NGCHM {
 		/*
 			Message listener to get labels and pathway reference information from NGCHM
 			
-			labels: list of labels (e.g. gene names)
-			pathwayReferences: object of pathway references to external databases. 
-			                   (e.g.: {'ndex': [< UUID of pathway 1 >, < UUID of pathway 2 >]})
+			If there is NDEx pathway reference information in the heat map (in the form of
+			NDEx UUIDs separated by commas), the first of these is loaded into PathwayMapper
+			(via call to this.ndex(uuid). All of them are added to the 
+			Network -> External Databse -> NDEX menu (via call to this.ndexSummary(uuid)
 		*/
 		VAN.addMessageListener('labels', (msg) => {
-			labels = msg.labels;
+			labels = msg.labels; // list of gene names
 			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
-				let loadFromExternal = new LoadFromExternalDatabase(this.editor,this.pathwayActions)
 				if (msg.pathways.hasOwnProperty('ndexUUIDs')) { // then NGCHM had pathways from NDEx
-					this.pathwayReferences['ndexUUIDs'] = msg.pathways.ndexUUIDs.split(',')
-				}
-				if (this.pathwayReferences.hasOwnProperty('ndexUUIDs') && this.pathwayReferences['ndexUUIDs'].length > 0) {
-					loadFromExternal.ndex(this.pathwayReferences['ndexUUIDs'][0])
+					let uuidsList = msg.pathways.ndexUUIDs.split(',')
+					uuidsList.forEach((uuid,idx) => {
+						this.ndexSummary(uuid)
+						if (idx == 0) {this.ndex(uuid)} // load first pathway by default
+					})
 				}
 			}
 		})

@@ -20,7 +20,6 @@ import ProfilesModal from '../modals/ProfilesModal';
 
 import {toast, ToastContainer} from 'react-toastify';
 import AboutModal from '../modals/AboutModal';
-import NDExModal from '../modals/NDExQueryModal';
 import ReactTooltip from 'react-tooltip';
 import PathwayDetailsModal from '../modals/PathwayDetailsModal';
 import ViewOperationsManager from '../managers/ViewOperationsManager';
@@ -72,7 +71,6 @@ export enum EModalType{
   PW_DETAILS,
   GRID,
   HELP,
-  NDEX,
   LAYOUT,
   CHELP
 }
@@ -145,11 +143,19 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
   viewOperationsManager: ViewOperationsManager;
   gridOptionsManager: GridOptionsManager;
 
+  @observable
+  ngchm: any;
+
   constructor(props: IPathwayMapperProps){
     super(props);
     this.fileManager = new FileOperationsManager();
+
     this.pathwayActions = new PathwayActions(this.pathwayHandler, this.profiles, this.fileManager, 
-                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative, this.props.isInIframe);
+                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative );
+    if (this.props.isInIframe) {
+      this.ngchm = new NGCHM(this.profiles,this.pathwayActions)
+      this.ngchm.editorHandler(this.editor)
+    }
     this.selectedPathway = "";
     if(this.props.pathwayName){
       this.pathwayActions.changePathway(this.props.pathwayName);
@@ -188,7 +194,11 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     */
     console.log("Profiles");
     console.log(this.profiles);
+
+
   }
+
+
 
   calculateAlterationData(cBioAlterationData: ICBioData[]){
     // Transform cBioDataAlteration into AlterationData
@@ -429,7 +439,9 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
           {!isCBioPortal && 
           [
           <div>
-            <Menubar pathwayActions={this.pathwayActions} handleOpen={this.handleOpen} setActiveEdge={this.setActiveEdge}/>
+            <Menubar key={this.ngchm.pathwayReferences} pathwayActions={this.pathwayActions} 
+              handleOpen={this.handleOpen} setActiveEdge={this.setActiveEdge} 
+              ngchm={this.ngchm} pathwayReferences={this.ngchm.pathwayReferences}/>
           </div>
           ,
           <div>
@@ -498,7 +510,6 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
             <ConfirmationModal isModalShown={this.isModalShown[EModalType.CONFIRMATION]} handleClose={this.handleClose} />
             <CBioHelpModal isModalShown={this.isModalShown[EModalType.CHELP]} handleClose={this.handleClose}/>
             <AboutModal isModalShown={this.isModalShown[EModalType.ABOUT]} handleClose={this.handleClose}/>
-            <NDExModal isModalShown={this.isModalShown[EModalType.NDEX]} pathwayActions={this.pathwayActions} handleClose={this.handleClose}/>
           </div>)
           }
           { !this.props.isCBioPortal &&
@@ -566,6 +577,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     this.gridOptionsManager = new GridOptionsManager(this.editor.cy);
     this.viewOperationsManager = new ViewOperationsManager(this.editor, this.editor.cy);
     this.pathwayActions.editorHandler(editor, eh, undoRedoManager, this.viewOperationsManager, this.gridOptionsManager);
+    this.ngchm.editorHandler(editor)
     
     if(this.props.isCBioPortal){
       this.editor.addPortalGenomicData(this.alterationData, this.editor.getEmptyGroupID());
