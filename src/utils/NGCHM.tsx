@@ -319,17 +319,20 @@ export default class NGCHM {
 				let cxJSON = JSON.parse(request.responseText);
 				let pmFormat = this.cx2pm(cxJSON)
 				let pathwayData: IPathwayData = SaveLoadUtility.parseGraph(pmFormat['pathway'], false)
-				this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
+				if (pmFormat['canDisplay']) {
+					this.editor.loadFile(pathwayData.nodes, pathwayData.edges)
+					toast.success('Loaded NDEx pathway: '+pmFormat['name'], {position: 'top-left', autoClose: 10000})
+				}
 				this.pathwayActions.setPathwayInfo({
 					pathwayTitle: pmFormat['name'],
 					pathwayDetails: pmFormat['description'],
 					fileName: pmFormat['name'].replace(/[^a-z0-9]/gi, '_').toLowerCase()
 				})
 				this.pathwayActions.pathwayHandler(pmFormat['name']);
-				toast.success('Loaded NDEx pathway: '+pmFormat['name'], {position: 'top-left'})
+
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				let jsonResponse = JSON.parse(request.response)
-				toast.error('NDEx error: '+jsonResponse.message, {position: 'top-left'})
+				toast.error('NDEx error: '+jsonResponse.message, {position: 'top-left', autoClose: 10000})
 				console.error('Error getting uuid "'+uuid+'" from NDEx. NDEx error message: ' + jsonResponse.message)
 			}
 		}
@@ -354,10 +357,16 @@ export default class NGCHM {
 		request.onreadystatechange = () => {
 			if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
 				let name = JSON.parse(request.responseText)['name']
-				this.pathwayReferences['NDEx'][uuid] = name
+				let nodeCount = JSON.parse(request.responseText)['nodeCount']
+				this.pathwayReferences['NDEx'][uuid] = {}
+				this.pathwayReferences['NDEx'][uuid]['name'] = name
+				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'oh!!'
+				console.log({mar4: 'ndex', name: name, nodeCount: nodeCount})
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				console.error('Error getting NDEx summary data for '+uuid)
-				this.pathwayReferences['NDEx'][uuid] = 'unknown'
+				this.pathwayReferences['NDEx'][uuid] = {}
+				this.pathwayReferences['NDEx'][uuid]['name'] = 'unknown'
+				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Cannot get name'
 			}
 		}
 		request.open('GET',url)
@@ -377,6 +386,7 @@ export default class NGCHM {
 				description: string description of pathway
 	*/
 	cx2pm = (cxJSON) => {
+		let canDisplay = true 
 		let pathway = ''
 		// get name of pathway
 		let cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['networkAttributes']))
@@ -393,6 +403,12 @@ export default class NGCHM {
 			let elem = {id: n['@id'], name: n['n'], type: 'GENE'} 
 			nodes.push(elem)
 		})
+		let maxNodes = 200
+		if (nodes.length > maxNodes) {
+			toast.error('Pathway ' + name + ' has too many nodes ('+nodes.length+') to display. Maximum is ' + 
+				maxNodes +'.', {position: 'top-left', autoClose: 10000})
+			canDisplay = false
+		}
 		// get cartesian layout
 		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['cartesianLayout']))
 		let cartesianLayoutList = cxEntry[0]['cartesianLayout']
@@ -421,7 +437,7 @@ export default class NGCHM {
 		edges.forEach((e) => {
 			pathway += e.id + '\t' + e.source + '\t' + e.target + '\t\n'
 		})
-		return({pathway: pathway, name: name, description: description})
+		return({pathway: pathway, name: name, description: description, canDisplay: canDisplay})
 	}
 
 
@@ -455,6 +471,9 @@ export default class NGCHM {
 		// Once we are registered, ask the host for the axis labels.
 		VAN.addMessageListener ('_register', function () {
 			VAN.postMessage ({ op: 'getLabels', axisName: 'row' });
+			VAN.postMessage ({ op: 'getProperty', propertyName: 'ndexUUIDs' });
+			VAN.postMessage ({ op: 'getProperty', propertyName: 'zetanne' });
+			VAN.postMessage ({ op: 'getProperty', propertyme: 'zetanne' });
 		});
 
 		/*
@@ -467,7 +486,7 @@ export default class NGCHM {
 		*/
 		VAN.addMessageListener('labels', (msg) => {
 			labels = msg.labels; // list of gene names
-			if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
+			/*if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
 				if (msg.pathways.hasOwnProperty('ndexUUIDs')) { // then NGCHM had pathways from NDEx
 					let uuidsList = msg.pathways.ndexUUIDs.split(',')
 					uuidsList.forEach((uuid,idx) => {
@@ -475,6 +494,23 @@ export default class NGCHM {
 						if (idx == 0) {this.ndex(uuid)} // load first pathway by default
 					})
 				}
+			}*/
+		})
+
+		/*
+			Message listener to get property.
+		*/
+		VAN.addMessageListener('property', (msg) => {
+			console.log({mar4: 'property message listener', msg: msg})
+			if (msg.hasOwnProperty('propertyName') && msg.propertyName === 'ndexUUIDs') {
+				let uuidsList = msg.propertyValue.split(',')
+				uuidsList.forEach((uuid,idx) => {
+					this.ndexSummary(uuid)
+					if (idx == 0) {this.ndex(uuid)} // load first pathway by default
+				})
+			} else {
+				console.error('Error with ndexUUIDs property')
+				console.error({mar4: 'propertyName error', msg: msg})
 			}
 		})
 
@@ -545,9 +581,9 @@ export default class NGCHM {
 			existingProfiles = profiles.map(pr => {return pr.profileId})
 			if (existingProfiles.indexOf(datasetLabel) === -1) {
 				profiles.push({profileId: datasetLabel, enabled: true, studyId: datasetLabel});
-				toast.success(datasetLabel + ' successfully loaded from NG-CHM', {position: 'top-left'});
+				toast.success(datasetLabel + ' successfully loaded from NG-CHM', {position: 'top-left', autoClose: 10000});
 			} else {
-				toast.error('Warning: Overwrote existing test name: "' + datasetLabel + '"', {position: 'top-left'});
+				toast.error('Warning: Overwrote existing test name: "' + datasetLabel + '"', {position: 'top-left', autoClose: 10000});
 			}
 		}
 

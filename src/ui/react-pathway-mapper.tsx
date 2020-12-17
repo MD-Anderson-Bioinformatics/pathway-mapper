@@ -34,6 +34,7 @@ import "../css/pmv1.css";
 import "../css/pmv2.css";
 import '../css/qtip.css';
 import 'react-toastify/dist/ReactToastify.css';
+import '../css/ngchm.css';
 
 import NGCHM from '../utils/NGCHM';
 
@@ -516,7 +517,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
             [<StudyModal isModalShown={this.isModalShown[EModalType.STUDY]} loadFromCBio={this.loadFromCBio} handleClose={this.handleClose}/>,
             <ToastContainer className={"pm-toast-container"}/>]
           }
-          <ReactTooltip className={isCBioPortal ? "" : "pmTip"} style={{maxWidth: "350px", zIndex: 9999999}}/>
+          <ReactTooltip className={isCBioPortal ? "" : "pmTip"} />
 
           <input id="myInput"
             type="file"

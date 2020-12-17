@@ -8,6 +8,7 @@ import { EModalType } from './react-pathway-mapper';
 import ConfirmationModal from '../modals/ConfirmationModal';
 import {observer} from 'mobx-react';
 import {observable,computed} from 'mobx';
+import ReactTooltip from 'react-tooltip';
 
 interface IMenubarProps{
     pathwayActions: PathwayActions;
@@ -29,6 +30,10 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
 
   }
 
+			componentDidUpdate() {
+				console.log({mar4: 'menubar component did update'});
+				ReactTooltip.rebuild();
+			}
     render(){
         const nodeTypes = ["Gene", "Family", "Complex", "Compartment", "Process"];
         const edgeTypes = ["Activates", "Inhibits", "Induces", "Represses", "Binds"];
@@ -46,11 +51,13 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
           }
         }
 
+
+
         return(
             <Navbar className="pathway-navbar">
               <Nav>
                 <NavDropdown eventKey={1} title="Network" id="basic-nav-network">
-                  <MenuItem eventKey={1.1} onClick={this.props.pathwayActions.newPathway}>New</MenuItem>
+                  <MenuItem eventKey={1.1} onClick={this.props.pathwayActions.newPathway} data-tip='work here?'>New</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.handleOpen(EModalType.PW_DETAILS);}}>Properties...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.upload();}}>Import</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="TCGA" id="basic-nav-TCGA">
@@ -80,27 +87,28 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <NavDropdown className="dropdown-submenu" eventKey={1} title="External Database" id="basic-nav-External">
+                  <NavDropdown className="dropdown-submenu mary" data-tip='zeta rocker' eventKey={1} title="External Database" id="basic-nav-External">
                         { 
                             /* Add a sub-menu item for each external database (e.g. 'NDEx') */
                           Object.keys(this.props.pathwayReferences).map((database) => {
                             return (
-                               <NavDropdown id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
+                               <NavDropdown data-tip='zetaanne was here' id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
+                                     {console.log({mar4: 'menu items', doo: this.props.pathwayReferences})}
                                   {
                                      /* Add entry for each pathway in that database. Clicking on entry loads the pathway. */
+
                                      Object.keys(this.props.pathwayReferences[database]).map((uuid) => 
-                                       <MenuItem onClick={() => {
+                                       <MenuItem data-tip={this.props.pathwayReferences[database][uuid]['tooltip']} id={uuid+"_uuid"} onClick={() => {
                                            if (this.props.pathwayActions.doesCyHaveElements()) {
                                             this.props.handleOpen(EModalType.CONFIRMATION);
                                             ConfirmationModal.pendingFunction = () => {this.props.ngchm.ndex(uuid)}
                                            } else {
                                             this.props.ngchm.ndex(uuid)
                                            }
-                                         }}>{this.props.pathwayReferences[database][uuid]}
+                                         }}>{this.props.pathwayReferences[database][uuid]['name']}
                                        </MenuItem>
                                      )
                                    }
-                                  
                                </NavDropdown>);
                           })
                         }
@@ -192,7 +200,9 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                   <a href="#">PathwayMapper</a>
                 </Navbar.Brand>
               </Nav>
+          <ReactTooltip className='pmTip'/>
             </Navbar>
+
         );
     }
 
