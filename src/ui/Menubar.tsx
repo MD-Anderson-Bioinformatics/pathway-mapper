@@ -30,10 +30,11 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
 
   }
 
-			componentDidUpdate() {
-				console.log({mar4: 'menubar component did update'});
-				ReactTooltip.rebuild();
-			}
+    componentDidUpdate() {
+      /* Must update tooltips because External Database ones are dynamically generated */
+      ReactTooltip.rebuild();
+    }
+
     render(){
         const nodeTypes = ["Gene", "Family", "Complex", "Compartment", "Process"];
         const edgeTypes = ["Activates", "Inhibits", "Induces", "Represses", "Binds"];
@@ -87,27 +88,36 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <NavDropdown className="dropdown-submenu mary" data-tip='zeta rocker' eventKey={1} title="External Database" id="basic-nav-External">
+                  <NavDropdown className="dropdown-submenu" eventKey={1} title="External Database" id="basic-nav-External">
                         { 
                             /* Add a sub-menu item for each external database (e.g. 'NDEx') */
                           Object.keys(this.props.pathwayReferences).map((database) => {
                             return (
-                               <NavDropdown data-tip='zetaanne was here' id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
-                                     {console.log({mar4: 'menu items', doo: this.props.pathwayReferences})}
+                               <NavDropdown id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
                                   {
-                                     /* Add entry for each pathway in that database. Clicking on entry loads the pathway. */
-
-                                     Object.keys(this.props.pathwayReferences[database]).map((uuid) => 
-                                       <MenuItem data-tip={this.props.pathwayReferences[database][uuid]['tooltip']} id={uuid+"_uuid"} onClick={() => {
-                                           if (this.props.pathwayActions.doesCyHaveElements()) {
-                                            this.props.handleOpen(EModalType.CONFIRMATION);
-                                            ConfirmationModal.pendingFunction = () => {this.props.ngchm.ndex(uuid)}
-                                           } else {
-                                            this.props.ngchm.ndex(uuid)
-                                           }
-                                         }}>{this.props.pathwayReferences[database][uuid]['name']}
-                                       </MenuItem>
-                                     )
+                                     /* Add MenuItem for each pathway from given database. */
+                                     Object.keys(this.props.pathwayReferences[database]).map((uuid) => {
+                                      /* 'tooltip' contains error message about invalid pathways. These items are disabled.*/
+                                      if (this.props.pathwayReferences[database][uuid].hasOwnProperty('tooltip')) {
+                                        return(
+                                         <MenuItem id={uuid+"_uuid"} data-tip={this.props.pathwayReferences[database][uuid]['tooltip']}
+                                           className='disabledMenuItem disabled'
+                                           >{this.props.pathwayReferences[database][uuid]['name']}
+                                         </MenuItem>)
+                                      } else { /* no toolip means pathway is valid. clicking on it loads pathway.*/
+                                       return(
+                                         <MenuItem  id={uuid+"_uuid"} 
+                                           onClick={() => {
+                                             if (this.props.pathwayActions.doesCyHaveElements()) {
+                                              this.props.handleOpen(EModalType.CONFIRMATION);
+                                              ConfirmationModal.pendingFunction = () => {this.props.ngchm.ndex(uuid)}
+                                             } else {
+                                              this.props.ngchm.ndex(uuid)
+                                             }
+                                           }}>{this.props.pathwayReferences[database][uuid]['name']}
+                                         </MenuItem>)
+                                     }
+                                     })
                                    }
                                </NavDropdown>);
                           })

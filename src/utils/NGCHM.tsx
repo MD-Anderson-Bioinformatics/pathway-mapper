@@ -360,13 +360,20 @@ export default class NGCHM {
 				let nodeCount = JSON.parse(request.responseText)['nodeCount']
 				this.pathwayReferences['NDEx'][uuid] = {}
 				this.pathwayReferences['NDEx'][uuid]['name'] = name
-				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'oh!!'
-				console.log({mar4: 'ndex', name: name, nodeCount: nodeCount})
+				if (nodeCount > 100) { // pathway too large to display
+					this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Pathway is too large to display. Pathway contains '+
+						nodeCount+' nodes. The maximum is 100.'
+					this.pathwayReferences['NDEx'][uuid]['className'] = 'disabledMenuItem disabled'
+				} else {
+					//this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'oh!!'
+					this.pathwayReferences['NDEx'][uuid]['className'] = ''
+				}
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				console.error('Error getting NDEx summary data for '+uuid)
 				this.pathwayReferences['NDEx'][uuid] = {}
 				this.pathwayReferences['NDEx'][uuid]['name'] = 'unknown'
-				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Cannot get name'
+				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'NDEx UUID in NG-CHM was not valid. Cannot retrieve pathway information.'
+				this.pathwayReferences['NDEx'][uuid]['className'] = 'disabledMenuItem disabled'
 			}
 		}
 		request.open('GET',url)
@@ -472,8 +479,6 @@ export default class NGCHM {
 		VAN.addMessageListener ('_register', function () {
 			VAN.postMessage ({ op: 'getLabels', axisName: 'row' });
 			VAN.postMessage ({ op: 'getProperty', propertyName: 'ndexUUIDs' });
-			VAN.postMessage ({ op: 'getProperty', propertyName: 'zetanne' });
-			VAN.postMessage ({ op: 'getProperty', propertyme: 'zetanne' });
 		});
 
 		/*
@@ -501,7 +506,6 @@ export default class NGCHM {
 			Message listener to get property.
 		*/
 		VAN.addMessageListener('property', (msg) => {
-			console.log({mar4: 'property message listener', msg: msg})
 			if (msg.hasOwnProperty('propertyName') && msg.propertyName === 'ndexUUIDs') {
 				let uuidsList = msg.propertyValue.split(',')
 				uuidsList.forEach((uuid,idx) => {
@@ -510,7 +514,6 @@ export default class NGCHM {
 				})
 			} else {
 				console.error('Error with ndexUUIDs property')
-				console.error({mar4: 'propertyName error', msg: msg})
 			}
 		})
 
