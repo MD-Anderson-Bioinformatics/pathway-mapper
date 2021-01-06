@@ -86,6 +86,10 @@
     color: #fff !important;
     font-size: 12px !important;
 }
+/* For disabled menu items (i.e. <MenuItem className='disabled'></MenuItem>) */
+.pathwayMapper .dropdown-submenu > .dropdown-menu > .disabled > a {
+	color: #8c8c8c !important;
+}
 .pathwayMapper .dropdown-submenu > .dropdown-menu > li > a:hover {
     color: #fff !important;
     background-color: #1abc9c !important;

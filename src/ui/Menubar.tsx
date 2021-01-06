@@ -100,7 +100,7 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                                       if (this.props.pathwayReferences[database][uuid].hasOwnProperty('tooltip')) {
                                         return(
                                          <MenuItem id={uuid+"_uuid"} data-tip={this.props.pathwayReferences[database][uuid]['tooltip']}
-                                           className='disabledMenuItem disabled' data-place='right' 
+                                           className='disabled' data-place='right' 
                                            >{this.props.pathwayReferences[database][uuid]['name']}
                                          </MenuItem>)
                                       } else { /* no toolip means pathway is valid. clicking on it loads pathway.*/
