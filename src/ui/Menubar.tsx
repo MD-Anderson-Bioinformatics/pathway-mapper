@@ -58,7 +58,7 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
             <Navbar className="pathway-navbar">
               <Nav>
                 <NavDropdown eventKey={1} title="Network" id="basic-nav-network">
-                  <MenuItem eventKey={1.1} onClick={this.props.pathwayActions.newPathway} data-tip='work here?'>New</MenuItem>
+                  <MenuItem eventKey={1.1} onClick={this.props.pathwayActions.newPathway}>New</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.handleOpen(EModalType.PW_DETAILS);}}>Properties...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.upload();}}>Import</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="TCGA" id="basic-nav-TCGA">
@@ -88,7 +88,6 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
-                  <NavDropdown className="dropdown-submenu" eventKey={1} title="External Database" id="basic-nav-External">
                         { 
                             /* Add a sub-menu item for each external database (e.g. 'NDEx') */
                           Object.keys(this.props.pathwayReferences).map((database) => {
@@ -101,7 +100,7 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                                       if (this.props.pathwayReferences[database][uuid].hasOwnProperty('tooltip')) {
                                         return(
                                          <MenuItem id={uuid+"_uuid"} data-tip={this.props.pathwayReferences[database][uuid]['tooltip']}
-                                           className='disabledMenuItem disabled'
+                                           className='disabledMenuItem disabled' data-place='right' 
                                            >{this.props.pathwayReferences[database][uuid]['name']}
                                          </MenuItem>)
                                       } else { /* no toolip means pathway is valid. clicking on it loads pathway.*/
@@ -122,7 +121,6 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                                </NavDropdown>);
                           })
                         }
-                  </NavDropdown>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.merge();}}>Merge With...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.export(false);}}>Export</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="Export as" id="basic-nav-export">

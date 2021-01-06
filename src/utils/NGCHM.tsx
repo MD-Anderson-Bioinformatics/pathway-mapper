@@ -329,7 +329,6 @@ export default class NGCHM {
 					fileName: pmFormat['name'].replace(/[^a-z0-9]/gi, '_').toLowerCase()
 				})
 				this.pathwayActions.pathwayHandler(pmFormat['name']);
-
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				let jsonResponse = JSON.parse(request.response)
 				toast.error('NDEx error: '+jsonResponse.message, {position: 'top-left', autoClose: 10000})
@@ -363,17 +362,12 @@ export default class NGCHM {
 				if (nodeCount > 100) { // pathway too large to display
 					this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Pathway is too large to display. Pathway contains '+
 						nodeCount+' nodes. The maximum is 100.'
-					this.pathwayReferences['NDEx'][uuid]['className'] = 'disabledMenuItem disabled'
-				} else {
-					//this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'oh!!'
-					this.pathwayReferences['NDEx'][uuid]['className'] = ''
 				}
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				console.error('Error getting NDEx summary data for '+uuid)
 				this.pathwayReferences['NDEx'][uuid] = {}
-				this.pathwayReferences['NDEx'][uuid]['name'] = 'unknown'
 				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'NDEx UUID in NG-CHM was not valid. Cannot retrieve pathway information.'
-				this.pathwayReferences['NDEx'][uuid]['className'] = 'disabledMenuItem disabled'
+				this.pathwayReferences['NDEx'][uuid]['name'] = 'unknown'
 			}
 		}
 		request.open('GET',url)
@@ -453,7 +447,7 @@ export default class NGCHM {
 		var existingProfiles = [];
 		var labels = null;
 		var plotConfig = {};
-		this.pathwayReferences = {'NDEx':{}} // References to pathways in external databases (e.g. NDEx)
+		this.pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -475,7 +469,7 @@ export default class NGCHM {
 		});
 
 
-		// Once we are registered, ask the host for the axis labels.
+		// Once registered, ask host for the axis labels and ndexUUIDs.
 		VAN.addMessageListener ('_register', function () {
 			VAN.postMessage ({ op: 'getLabels', axisName: 'row' });
 			VAN.postMessage ({ op: 'getProperty', propertyName: 'ndexUUIDs' });
@@ -491,29 +485,27 @@ export default class NGCHM {
 		*/
 		VAN.addMessageListener('labels', (msg) => {
 			labels = msg.labels; // list of gene names
-			/*if (msg.hasOwnProperty('pathways')) { // then NGCHM had pathway information embeded
-				if (msg.pathways.hasOwnProperty('ndexUUIDs')) { // then NGCHM had pathways from NDEx
-					let uuidsList = msg.pathways.ndexUUIDs.split(',')
-					uuidsList.forEach((uuid,idx) => {
-						this.ndexSummary(uuid)
-						if (idx == 0) {this.ndex(uuid)} // load first pathway by default
-					})
-				}
-			}*/
 		})
 
 		/*
-			Message listener to get property.
+			Message listener to get property. 
+			
+			After registration, an {op:'getProperty'} message was sent to get ndexUUIDs.
+			This function processes those UUIDs 
 		*/
 		VAN.addMessageListener('property', (msg) => {
-			if (msg.hasOwnProperty('propertyName') && msg.propertyName === 'ndexUUIDs') {
-				let uuidsList = msg.propertyValue.split(',')
+			if (msg.hasOwnProperty('propertyName') && msg.propertyValue != undefined ) {
+				try {
+					var uuidsList = msg.propertyValue.split(',')
+				} catch(err) {
+					console.error('UUIDs from NG-CHM are not valid.');
+					return;
+				}
+				this.pathwayReferences['NDEx'] = {} // References to pathways in NDEx
 				uuidsList.forEach((uuid,idx) => {
-					this.ndexSummary(uuid)
+					this.ndexSummary(uuid) // get summary from NDEx for this UUID
 					if (idx == 0) {this.ndex(uuid)} // load first pathway by default
 				})
-			} else {
-				console.error('Error with ndexUUIDs property')
 			}
 		})
 
