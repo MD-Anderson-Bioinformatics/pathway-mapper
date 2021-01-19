@@ -411,16 +411,24 @@ export default class NGCHM {
 			canDisplay = false
 		}
 		// get cartesian layout
-		cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['cartesianLayout']))
-		let cartesianLayoutList = cxEntry[0]['cartesianLayout']
-		cartesianLayoutList.forEach((cl) => {
-			nodes.forEach((n) => {
-				if (n.id == cl.node) {
-					n['x'] = cl['x']
-					n['y'] = cl['y']
-				}
+		try {
+			cxEntry = cxJSON.filter( n => JSON.stringify(Object.keys(n)) === JSON.stringify(['cartesianLayout']))
+			let cartesianLayoutList = cxEntry[0]['cartesianLayout']
+			cartesianLayoutList.forEach((cl) => {
+				nodes.forEach((n) => {
+					if (n.id == cl.node) {
+						n['x'] = cl['x']
+						n['y'] = cl['y']
+					}
+				})
 			})
-		})
+		} catch (err) {
+			nodes.forEach((n) => {
+				n['x'] = Math.random() * 100;
+				n['y'] = Math.random() * 100;
+			})
+			toast.warn('Layout information not available from NDEx. Using random layout.', {position:'top-left', autoClose: 10000})
+		}
 		let width = 150; 
 		let height = 52;
 		nodes.forEach((n) => {
