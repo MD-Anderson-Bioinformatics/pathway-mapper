@@ -6,8 +6,9 @@ import EditorActionsManager from '../managers/EditorActionsManager'
 import {IProfileMetaData, IPathwayData} from '../ui/react-pathway-mapper'
 import {toast} from 'react-toastify';
 import PathwayActions from '../utils/PathwayActions'
-import {observable} from 'mobx';
+import {observable, autorun,toJS} from 'mobx';
 import SaveLoadUtility from './SaveLoadUtility'
+import _ from 'lodash';
 
 	//////////////////////
 	//
@@ -271,9 +272,10 @@ export default class NGCHM {
 	editor: EditorActionsManager
 	profiles: IProfileMetaData[]
 	VAN: any;
-	pathwayActions: PathwayActions
+	pathwayActions: PathwayActions;
 	@observable
 	pathwayReferences: any;
+	loadedFirstValidPathway: boolean;
 
 	/* Function to post message to NGCHM to select heat map labels of genes selected on pathway */
 	highlightSelected = () => { 
@@ -312,6 +314,10 @@ export default class NGCHM {
 			uuid: string UUID of specific pathway from NDEx
 	*/
 	ndex = (uuid) => {
+		if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid)) {
+			toast.error('"'+_.escape(uuid)+'" is not a valid UUID. Cannot query NDEx', {position: 'top-left', autoClose: 10000});
+			return
+		}
 		let url = 'http://www.ndexbio.org/v2/network/' + uuid 
 		let request = new XMLHttpRequest()
 		request.onreadystatechange = () => {
@@ -350,7 +356,14 @@ export default class NGCHM {
 		Inputs:
 			uuid: string UUID of specific pathway from NDEx
 	*/
-	ndexSummary = (uuid) => {
+	ndexSummary = (uuidUnescaped) => {
+		let uuid = _.escape(uuidUnescaped);
+		if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid)) {
+			this.pathwayReferences['NDEx'][uuid] = {}
+			this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'NDEx UUID from NG-CHM was not valid. Cannot retrieve pathway information.'
+			this.pathwayReferences['NDEx'][uuid]['name'] = uuid 
+			return
+		}
 		let url = 'http://www.ndexbio.org/v2/network/' + uuid + '/summary'
 		let request = new XMLHttpRequest()
 		request.onreadystatechange = () => {
@@ -359,15 +372,18 @@ export default class NGCHM {
 				let nodeCount = JSON.parse(request.responseText)['nodeCount']
 				this.pathwayReferences['NDEx'][uuid] = {}
 				this.pathwayReferences['NDEx'][uuid]['name'] = name
-				if (nodeCount > 100) { // pathway too large to display
+				if (nodeCount > 1000) { // See also check in cx2pm()
 					this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Pathway is too large to display. Pathway contains '+
-						nodeCount+' nodes. The maximum is 100.'
+						nodeCount+' nodes. The maximum is 1000.'
+				} else if (!this.loadedFirstValidPathway) {
+					this.ndex(uuid)
+					this.loadedFirstValidPathway = true;
 				}
 			} else if (request.readyState === XMLHttpRequest.DONE && request.status != 200) {
 				console.error('Error getting NDEx summary data for '+uuid)
 				this.pathwayReferences['NDEx'][uuid] = {}
 				this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'NDEx UUID in NG-CHM was not valid. Cannot retrieve pathway information.'
-				this.pathwayReferences['NDEx'][uuid]['name'] = 'unknown'
+				this.pathwayReferences['NDEx'][uuid]['name'] = uuid
 			}
 		}
 		request.open('GET',url)
@@ -404,7 +420,7 @@ export default class NGCHM {
 			let elem = {id: n['@id'], name: n['n'], type: 'GENE'} 
 			nodes.push(elem)
 		})
-		let maxNodes = 200
+		let maxNodes = 1000 // See also the check in ndexSummary()
 		if (nodes.length > maxNodes) {
 			toast.error('Pathway ' + name + ' has too many nodes ('+nodes.length+') to display. Maximum is ' + 
 				maxNodes +'.', {position: 'top-left', autoClose: 10000})
@@ -456,6 +472,7 @@ export default class NGCHM {
 		var labels = null;
 		var plotConfig = {};
 		this.pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
+		this.loadedFirstValidPathway = false;
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
@@ -504,15 +521,14 @@ export default class NGCHM {
 		VAN.addMessageListener('property', (msg) => {
 			if (msg.hasOwnProperty('propertyName') && msg.propertyValue != undefined ) {
 				try {
-					var uuidsList = msg.propertyValue.split(',')
+					var uuidsList = _.escape(msg.propertyValue).split(',')
 				} catch(err) {
-					console.error('UUIDs from NG-CHM are not valid.');
+					toast.error('NG-CHM contains an ndexUUIDs property, but it is not valid.',{position:'top-left',autoClose:10000})
 					return;
 				}
 				this.pathwayReferences['NDEx'] = {} // References to pathways in NDEx
 				uuidsList.forEach((uuid,idx) => {
 					this.ndexSummary(uuid) // get summary from NDEx for this UUID
-					if (idx == 0) {this.ndex(uuid)} // load first pathway by default
 				})
 			}
 		})
