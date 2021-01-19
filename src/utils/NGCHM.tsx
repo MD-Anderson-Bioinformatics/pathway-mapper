@@ -276,6 +276,7 @@ export default class NGCHM {
 	@observable
 	pathwayReferences: any;
 	loadedFirstValidPathway: boolean;
+	maxNodesCanDisplay: number;
 
 	/* Function to post message to NGCHM to select heat map labels of genes selected on pathway */
 	highlightSelected = () => { 
@@ -372,9 +373,9 @@ export default class NGCHM {
 				let nodeCount = JSON.parse(request.responseText)['nodeCount']
 				this.pathwayReferences['NDEx'][uuid] = {}
 				this.pathwayReferences['NDEx'][uuid]['name'] = name
-				if (nodeCount > 1000) { // See also check in cx2pm()
+				if (nodeCount > this.maxNodesCanDisplay) { 
 					this.pathwayReferences['NDEx'][uuid]['tooltip'] = 'Pathway is too large to display. Pathway contains '+
-						nodeCount+' nodes. The maximum is 1000.'
+						nodeCount+' nodes. The maximum is '+this.maxNodesCanDisplay+'.'
 				} else if (!this.loadedFirstValidPathway) {
 					this.ndex(uuid)
 					this.loadedFirstValidPathway = true;
@@ -420,7 +421,7 @@ export default class NGCHM {
 			let elem = {id: n['@id'], name: n['n'], type: 'GENE'} 
 			nodes.push(elem)
 		})
-		let maxNodes = 1000 // See also the check in ndexSummary()
+		let maxNodes = this.maxNodesCanDisplay;
 		if (nodes.length > maxNodes) {
 			toast.error('Pathway ' + name + ' has too many nodes ('+nodes.length+') to display. Maximum is ' + 
 				maxNodes +'.', {position: 'top-left', autoClose: 10000})
@@ -473,6 +474,7 @@ export default class NGCHM {
 		var plotConfig = {};
 		this.pathwayReferences = {} // References to pathways in external databases (e.g. NDEx)
 		this.loadedFirstValidPathway = false;
+		this.maxNodesCanDisplay = 1000; 
 		const VAN = new Vanodi ({
 			name: 'pathway-mapper',
 			updatePolicy: 'asis',		// Choices are 'asis', 'update', or 'final'.
