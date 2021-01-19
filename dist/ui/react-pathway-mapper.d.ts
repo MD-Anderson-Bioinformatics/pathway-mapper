@@ -3,6 +3,7 @@ import EditorActionsManager from "../managers/EditorActionsManager";
 import FileOperationsManager from '../managers/FileOperationsManager';
 import PathwayActions from '../utils/PathwayActions';
 import CBioPortalAccessor from '../utils/CBioPortalAccessor';
+import { IGeneticAlterationRuleSetParams } from 'oncoprintjs';
 import ViewOperationsManager from '../managers/ViewOperationsManager';
 import GridOptionsManager from '../managers/GridOptionsManager';
 import "../css/pmv1.css";
@@ -14,6 +15,7 @@ interface IPathwayMapperProps {
     genes: any[];
     isCollaborative?: boolean;
     cBioAlterationData?: ICBioData[];
+    sampleIconData?: ISampleIconData;
     pathwayName?: string;
     alterationData?: IAlterationData;
     onAddGenes?: (selectedGenes: string[]) => void;
@@ -23,12 +25,25 @@ interface IPathwayMapperProps {
     validGenes?: any;
     toast: any;
     isInIframe: boolean;
+    showMessage: (message: string) => void;
+    patientView?: boolean;
+    messageBanner?: () => JSX.Element;
 }
 export interface ICBioData {
     altered: number;
     gene: string;
     percentAltered: string;
     sequenced: number;
+    geneticTrackData?: any[];
+    geneticTrackRuleSetParams?: IGeneticAlterationRuleSetParams;
+}
+export interface ISampleIconData {
+    sampleIndex: {
+        [s: string]: number;
+    };
+    sampleColors: {
+        [s: string]: string;
+    };
 }
 export declare enum EModalType {
     STUDY = 0,
@@ -77,6 +92,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     isModalShown: boolean[];
     portalAcessor: CBioPortalAccessor;
     alterationData: IAlterationData;
+    patientData: any[][];
     pathwayGeneMap: {
         [key: string]: {
             [key: string]: string;
@@ -88,8 +104,13 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     setActiveEdge: (edgeId: number) => void;
     viewOperationsManager: ViewOperationsManager;
     gridOptionsManager: GridOptionsManager;
+    ngchm: any;
     constructor(props: IPathwayMapperProps);
+    setSelectedPathway(pathway: string): void;
+    setEditor(editor: EditorActionsManager): void;
     calculateAlterationData(cBioAlterationData: ICBioData[]): void;
+    calculatePatientData(cBioAlterationData: ICBioData[]): void;
+    addSampleIconData(sampleIconData: any): void;
     getGeneStudyMap(studyGeneMap: any): any;
     getAlterationAveragePerGene(genomicDataMap: any): any;
     /**
