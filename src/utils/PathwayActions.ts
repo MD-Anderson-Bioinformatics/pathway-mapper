@@ -16,7 +16,6 @@ import GridOptionsManager from '../managers/GridOptionsManager'
 import { ILayoutProperties } from '../modals/LayoutProperties'
 import { EGridType } from '../modals/GridSettings'
 import ConfirmationModal from '../modals/ConfirmationModal'
-//import NGCHM from './NGCHM'
 
 export default class PathwayActions {
   @observable
@@ -36,7 +35,6 @@ export default class PathwayActions {
   isCollaborative: boolean
   viewOperationsManager: ViewOperationsManager
   overlayUploader: any
-  //isInIframe: boolean
 
   @observable
   enabledType: EGridType
@@ -48,7 +46,6 @@ export default class PathwayActions {
     handleOpen: (modalId: EModalType) => void,
     isCBioPortal: boolean,
     isCollaborative: boolean,
-    //isInIframe: boolean
   ) {
     this.pathwayHandler = pathwayHandler
     this.profiles = profiles
