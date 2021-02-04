@@ -143,11 +143,19 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
   viewOperationsManager: ViewOperationsManager;
   gridOptionsManager: GridOptionsManager;
 
+  @observable
+  ngchm: any;
+
   constructor(props: IPathwayMapperProps){
     super(props);
     this.fileManager = new FileOperationsManager();
+
     this.pathwayActions = new PathwayActions(this.pathwayHandler, this.profiles, this.fileManager, 
-                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative, this.props.isInIframe);
+                                             this.handleOpen, this.props.isCBioPortal, this.props.isCollaborative );
+    if (this.props.isInIframe) {
+      this.ngchm = new NGCHM(this.profiles,this.pathwayActions)
+      this.ngchm.editorHandler(this.editor)
+    }
     this.selectedPathway = "";
     if(this.props.pathwayName){
       this.pathwayActions.changePathway(this.props.pathwayName);
@@ -186,7 +194,11 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     */
     console.log("Profiles");
     console.log(this.profiles);
+
+
   }
+
+
 
   calculateAlterationData(cBioAlterationData: ICBioData[]){
     // Transform cBioDataAlteration into AlterationData
@@ -427,7 +439,9 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
           {!isCBioPortal && 
           [
           <div>
-            <Menubar pathwayActions={this.pathwayActions} handleOpen={this.handleOpen} setActiveEdge={this.setActiveEdge}/>
+            <Menubar key={this.ngchm.pathwayReferences} pathwayActions={this.pathwayActions} 
+              handleOpen={this.handleOpen} setActiveEdge={this.setActiveEdge} 
+              ngchm={this.ngchm} pathwayReferences={this.ngchm.pathwayReferences}/>
           </div>
           ,
           <div>
@@ -502,7 +516,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
             [<StudyModal isModalShown={this.isModalShown[EModalType.STUDY]} loadFromCBio={this.loadFromCBio} handleClose={this.handleClose}/>,
             <ToastContainer className={"pm-toast-container"}/>]
           }
-          <ReactTooltip className={isCBioPortal ? "" : "pmTip"} style={{maxWidth: "350px", zIndex: 9999999}}/>
+          <ReactTooltip className={isCBioPortal ? "" : "pmTip"} />
 
           <input id="myInput"
             type="file"
@@ -563,6 +577,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     this.gridOptionsManager = new GridOptionsManager(this.editor.cy);
     this.viewOperationsManager = new ViewOperationsManager(this.editor, this.editor.cy);
     this.pathwayActions.editorHandler(editor, eh, undoRedoManager, this.viewOperationsManager, this.gridOptionsManager);
+    this.ngchm.editorHandler(editor)
     
     if(this.props.isCBioPortal){
       this.editor.addPortalGenomicData(this.alterationData, this.editor.getEmptyGroupID());

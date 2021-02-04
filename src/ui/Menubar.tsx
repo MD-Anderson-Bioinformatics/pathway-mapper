@@ -6,20 +6,34 @@ import autobind from 'autobind-decorator';
 import SaveLoadUtility from '../utils/SaveLoadUtility';
 import { EModalType } from './react-pathway-mapper';
 import ConfirmationModal from '../modals/ConfirmationModal';
+import {observer} from 'mobx-react';
+import {observable,computed} from 'mobx';
+import ReactTooltip from 'react-tooltip';
 
 interface IMenubarProps{
     pathwayActions: PathwayActions;
     handleOpen: (modalId: EModalType) => void;
     setActiveEdge: Function;
+    ngchm: any;
+    pathwayReferences: any;
 }
 
 
+@observer
 export default class Menubar extends React.Component<IMenubarProps, {}>{
 
 
+        @observable
+        pathwayReferences: any;
     constructor(props: IMenubarProps){
         super(props);
+
   }
+
+    componentDidUpdate() {
+      /* Must update tooltips because External Database ones are dynamically generated */
+      ReactTooltip.rebuild();
+    }
 
     render(){
         const nodeTypes = ["Gene", "Family", "Complex", "Compartment", "Process"];
@@ -37,6 +51,8 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
             pathwayDropdownData[pwHead] = [pwName];
           }
         }
+
+
 
         return(
             <Navbar className="pathway-navbar">
@@ -72,6 +88,39 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                       })
                     }
                   </NavDropdown>
+                        { 
+                            /* Add a sub-menu item for each external database (e.g. 'NDEx') */
+                          Object.keys(this.props.pathwayReferences).map((database) => {
+                            return (
+                               <NavDropdown id={database+"_dropdown"} className="dropdown-submenu" eventKey={1} title={database}>
+                                  {
+                                     /* Add MenuItem for each pathway from given database. */
+                                     Object.keys(this.props.pathwayReferences[database]).map((uuid) => {
+                                      /* 'tooltip' contains error message about invalid pathways. These items are disabled.*/
+                                      if (this.props.pathwayReferences[database][uuid].hasOwnProperty('tooltip')) {
+                                        return(
+                                         <MenuItem id={uuid+"_uuid"} data-tip={this.props.pathwayReferences[database][uuid]['tooltip']}
+                                           className='disabled' data-place='right' 
+                                           >{this.props.pathwayReferences[database][uuid]['name']}
+                                         </MenuItem>)
+                                      } else { /* no toolip means pathway is valid. clicking on it loads pathway.*/
+                                       return(
+                                         <MenuItem  id={uuid+"_uuid"} 
+                                           onClick={() => {
+                                             if (this.props.pathwayActions.doesCyHaveElements()) {
+                                              this.props.handleOpen(EModalType.CONFIRMATION);
+                                              ConfirmationModal.pendingFunction = () => {this.props.ngchm.ndex(uuid)}
+                                             } else {
+                                              this.props.ngchm.ndex(uuid)
+                                             }
+                                           }}>{this.props.pathwayReferences[database][uuid]['name']}
+                                         </MenuItem>)
+                                     }
+                                     })
+                                   }
+                               </NavDropdown>);
+                          })
+                        }
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.merge();}}>Merge With...</MenuItem>
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.export(false);}}>Export</MenuItem>
                   <NavDropdown className="dropdown-submenu" eventKey={1} title="Export as" id="basic-nav-export">
@@ -130,10 +179,12 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                   <MenuItem eventKey={1.1} onClick={() => {this.props.pathwayActions.showAll();}}>Show All Nodes</MenuItem>
                 </NavDropdown>
                 <NavDropdown eventKey={4} title="Highlight" id="basic-nav-highlight">
-                  <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.highlightSelected}>Highlight Selected</MenuItem>
+                  <MenuItem eventKey={4.1} onClick={() => {this.props.pathwayActions.highlightSelected();
+                     this.props.ngchm.highlightSelected();}}>Highlight Selected</MenuItem>
                   <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.highlightNeighbours}>Highlight Neighbors Of Selected</MenuItem>
                   <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.validateGenes}>Identify Invalid Genes</MenuItem>
-                  <MenuItem eventKey={4.1} onClick={this.props.pathwayActions.removeAllHighlight}>Remove All Highlights</MenuItem>
+                  <MenuItem eventKey={4.1} onClick={() => {this.props.pathwayActions.removeAllHighlight();
+                     this.props.pathwayActions.highlightSelected();}}>Remove All Highlights</MenuItem>
                 </NavDropdown>
                 <NavDropdown eventKey={5} title="Alteration %" id="basic-nav-alteration">
                   <MenuItem eventKey={5.1} onClick={() => {this.props.pathwayActions.uploadOverlay();}}>Load From File...</MenuItem>
@@ -157,7 +208,10 @@ export default class Menubar extends React.Component<IMenubarProps, {}>{
                   <a href="#">PathwayMapper</a>
                 </Navbar.Brand>
               </Nav>
+          <ReactTooltip className='pmTip'/>
             </Navbar>
+
         );
     }
+
 }
