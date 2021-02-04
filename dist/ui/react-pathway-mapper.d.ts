@@ -88,6 +88,7 @@ export default class PathwayMapper extends React.Component<IPathwayMapperProps, 
     setActiveEdge: (edgeId: number) => void;
     viewOperationsManager: ViewOperationsManager;
     gridOptionsManager: GridOptionsManager;
+    ngchm: any;
     constructor(props: IPathwayMapperProps);
     calculateAlterationData(cBioAlterationData: ICBioData[]): void;
     getGeneStudyMap(studyGeneMap: any): any;
